@@ -1,0 +1,93 @@
+# Set Working Environment {#Set3}
+
+```{r tidyr3, echo = FALSE, message = FALSE, warning = FALSE}
+
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy = FALSE)
+
+```
+
+In this section, we load the packages we need, source the scripts we need, and assign parameter values required for the trend analysis.
+
+## Load Packages {#Set3.1}
+
+```{r load packages echo = FALSE, message = FALSE}
+
+#First time download of INLA needs to be done from the website
+#install.packages("INLA", repos=c(getOption("repos"), #INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
+
+#First time download of naturecounts needs to be done from GitHub using the remotes package. 
+#install.packages("remotes")
+#remotes::install_github("BirdStudiesCanada/naturecounts")
+
+require(naturecounts)
+require(INLA)
+require(tidyverse)
+require(lubridate)
+require(reshape)
+
+
+```
+ 
+## Source Scripts{#Set3.2}
+
+```{r source functions, message = FALSE }
+
+source("./Functions/filterBadDates.r")
+source("./Functions/sqlSave.r")
+source("./Functions/sqlString.r")
+```
+
+## Assign parameters that have common values across CMMN sites {#Set3.3}
+
+```{r set common parameters, message = FALSE}
+
+# THIS NEEDS TO BE CHANGED WITH UPDATES TO ANALYSIS:
+max.year <- 2020
+
+# set output directory for analysis files; create if not already there
+out.dir <- paste("./Output/", max.year, "/", sep = "")
+dir.create(out.dir, showWarnings=FALSE, recursive=TRUE)
+
+# get list of species common names, to be used later
+
+sp.names <- meta_species_codes() %>% filter(authority=="CMMN")
+tax<-meta_species_taxonomy()
+sp.names<-left_join(sp.names, tax, by=c("species_id"))
+sp.names<-sp.names %>% select("species_code", "species_id", "sort_order", "english_name", "scientific_name", "french_name")
+sp.names<-sp.names %>% distinct(species_code, .keep_all= TRUE)
+
+project <- 1005 # same for all
+results.code <- "CMMN" # same for all
+
+# create sql files of indices and trends? If TRUE, trends will be written to sql files and those posted online. 
+write.indices.sql = TRUE
+write.trends.sql = TRUE
+write.migwindowsumm.sql = TRUE  # should always be true - this can be posted for all species - shows when species are observed at a site, and isn't 'sensitive' or open to interpretation as are the trends, for the different classifications of species.
+
+# limits for seasonal windows
+season.pctile1 = 5
+season.pctile2 = 95
+
+# limits for station coverage windows
+station.pctile1 = 5
+station.pctile2 = 95
+
+# set year increment for trends: every 10-year period (10-, 20-, 30-, etc)
+yr.incr <- 10
+
+```
+
+
+## Import site-specific analysis parameters {#Set3.3}
+
+Provides list of sites to analyze, which contains site code, site name, seasons and sometimes start or end years.  In general, if there are specific years (or dates, or species) that should always be removed for a station prior to analysis, these should be submitted to Denis or Catherine to be included in the "baddates" database, which is called on later in the code.
+
+Each row in the anal.param file is a separate site AND season (i.e., sites that count both seasons are in two rows)
+
+```{r import analysis parameters, echo = FALSE, message = FALSE}
+
+anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv")
+
+```
+

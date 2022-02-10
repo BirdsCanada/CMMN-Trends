@@ -1,0 +1,16 @@
+# Introduction {#Intro1}
+
+```{r tidyr1, echo = FALSE, message = FALSE, warning = FALSE}
+
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy = FALSE)
+
+```
+
+## The Canadian Migration Monitoring Network - Réseau canadien de surveillance des migrations (CMMN-RCSM) {#Intro1.1}
+
+
+Bird migration monitoring provides baseline information on avian populations which is crucial for bird conservation. The Canadian Migration Monitoring Network - Réseau canadien de surveillance des migrations (CMMN-RCSM) defines migration monitoring as any standardized program of sampling migrants, by capture or observation, that is repeated daily and annually and has the capacity to contribute scientifically meaningful data that further the understanding of bird migration ecology in Canada.
+
+Accurate knowledge of population status and change is fundamental to species conservation, if scarce resources are to be allocated wisely. The primary program for monitoring population change for most North American landbirds is the Breeding Bird Survey (BBS). However, many parts of Canada are relatively inaccessible, and few birders are available to count birds in these northern regions. Consequently, the BBS provides very little information on population trends of birds breeding in the vast boreal forest and other parts of northern Canada. This limitation of BBS was recognized by the Partners in Flight North American Landbird Conservation Plan whose recommendations included "continue improvement of migration monitoring to meet information needs of many raptors and the large group of northern nesting Neotropical migrants that are largely inaccessible for monitoring both in the breeding or wintering seasons" (Rich et al. 2004:29. http://www.partnersinflight.org/cont_plan/). The CMMN-RCSM was formed in 1998 primarily to fill that gap.
+

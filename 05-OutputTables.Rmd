@@ -1,0 +1,44 @@
+## Set up output tables
+
+This is in a separate file because if loop through species fails, don't want to re-write these files and delete everything that has already been done. Can then just re-start the loop at the next species, and keep going.
+
+```{r outputTables}
+
+## Create text file for indices
+
+
+  indices.txt <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 22, byrow = FALSE,
+       dimnames = NULL))
+  names(indices.txt) <- c("SpeciesCode", "index", "lower_ci", "upper_ci", "SD", "index.bt", "lower_ci.bt", "upper_ci.bt", "SD.bt", "years", "year", "period", "season", "results_code", "area_code",  "analysis_code", "model_type", "species_id", "sort_order", "english_name", "scientific_name", "french_name")  
+  write.table(indices.txt, file = paste(out.dir, 
+	site, ".AnnualIndices.", max.yr.filt, ".csv", sep = ""), 
+	row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+  
+
+## Create text file for trends (appending year periods into one file)
+
+  trends.txt <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 26, 
+	byrow = FALSE, dimnames = NULL))
+  names(trends.txt) <- c("SpeciesCode","mean", "sd", "lcl", "mid", 
+	"ucl", "mode", "kld", "trnd", "lower_ci", "upper_ci", 
+	"post_prob", "years", "period", "season", "results_code", "area_code", "site", "model_type", "trnd_order", "analysis_code",
+"species_id", "sort_order", "english_name", "scientific_name", "french_name") 
+  
+  write.table(trends.txt, file = paste(out.dir, 
+	site, ".Trends.", max.yr.filt, ".csv", sep = ""), 
+	row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+  
+```
+
+
+In 2018 added an error output table to record when INLA crashes for a specific species. 
+```{r write error output file, echo = FALSE, message = FALSE}
+   
+error <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 4, byrow = FALSE, dimnames = NULL))
+   names(error) <- c("Site", "Season", "SpeciesCode", "time.period")
+
+   #only need to create the table once per analysis   
+
+   write.table(error, file = paste(out.dir,  "ErrorFile.", max.yr.filt, ".csv", sep = ""), row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+    
+```
