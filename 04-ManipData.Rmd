@@ -1,3 +1,6 @@
+## Old to be deleted. 
+## Replaced with 01-prepare.R
+
 # Set up Station Data {#Setup4}
 
 ```{r tidyr4, echo = FALSE, message = FALSE, warning = FALSE}
@@ -20,7 +23,7 @@ Also, assign values to the R objects for collection, station, site, and whether 
 #######
 # This is the only thing that needs to be changed in this file:
 # number based on anal.param
-t <- 2
+t <- 1
 #######
 
 collection <- as.character(anal.param[t, "collection"])
@@ -48,7 +51,7 @@ Import data for a station (all species, sites, seasons) using the naturecounts R
 
 ```{r importData}
 
-in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = "dethier", info="Trend analysis")
+in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = "dethier", info="Trend analysis", years=c(2011, 2021))
 
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
 

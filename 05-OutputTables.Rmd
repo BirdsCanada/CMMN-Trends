@@ -1,4 +1,5 @@
 ## Set up output tables
+#To be deleted. Moved to the end of the 01_prepare.R file. 
 
 This is in a separate file because if loop through species fails, don't want to re-write these files and delete everything that has already been done. Can then just re-start the loop at the next species, and keep going.
 

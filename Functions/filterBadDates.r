@@ -20,27 +20,27 @@
 
 bscdata.filterBadDates <- function(df, verbose=FALSE, ...) {
 
-  if (verbose) print(paste("dataframe size before transformation:", NROW(df), "records"))
+# if (verbose) print(paste("dataframe size before transformation:", NROW(df), "records"))
 
   # exclude filtered records (based on date, project, sitecode and species when applicable)
   # any filter with a value > 0 will be used to exclude data from the bmde dataframe
 
   #baddates.df <- bscdata.readBMDEFilterBadDates(verbose=verbose, ...)
   
-  baddates.df<-read.csv("Data/bad_dates_CMMN_2022.csv") #this was changed to read the bad dates from the local file. 
+  baddates.df<-read.csv("Data/bad_dates.csv") #this was changed to read the bad dates from the local file. 
   baddates.df$start_year[baddates.df$start_year == 0] <- NA
   baddates.df$end_year[baddates.df$end_year == 0] <- NA
   baddates.df$period[is.na(baddates.df$period)] <- 0
   
   # convert the filter fields names to match BMDE. Should probably rename the table fields instead!
-  names(baddates.df) <- c("project_id","SurveyAreaIdentifier","species_id","YearCollected","MonthCollected","DayCollected","period", "comment", "start_year", "end_year")
+  #names(baddates.df) <- c("project_id","SurveyAreaIdentifier","species_id","YearCollected","MonthCollected","DayCollected","period", "comment", "start_year", "end_year")
 
   #Added filter 2022 to accommodate the new format 
   
   if(length(site.list)>1){ #this is only true for LPBO
     baddates.df<-baddates.df %>% filter(SurveyAreaIdentifier %in% c("LPBO1", "LPBO2", "LPBO3"))  
   }else{
-    baddates.df<-baddates.df %>% filter(SurveyAreaIdentifier==site.list)  
+    baddates.df<-baddates.df %>% filter(SiteCode==site.list)  
   }
   
   if(length(baddates.df$project_id) > 0) {
@@ -48,9 +48,9 @@ bscdata.filterBadDates <- function(df, verbose=FALSE, ...) {
   }
 
 # ffields are fields used for filtering
-# ffields <- c("project_id","SiteCode","species_id","survey_year","survey_month","survey_day","period")
+ ffields <- c("project_id","SiteCode","species_id","survey_year","survey_month","survey_day","period")
 # ffields <- c("ProjectCode","SurveyAreaIdentifier","species_id","YearCollected","MonthCollected","DayCollected","period")
-  ffields <- c("SurveyAreaIdentifier","species_id","YearCollected","MonthCollected","DayCollected")
+#  ffields <- c("SurveyAreaIdentifier","species_id","YearCollected","MonthCollected","DayCollected")
   
   # bfields are fields in the dataframe. This is used to subset the modify dataframe back to its original columns
   bfields <- names(df)
@@ -79,7 +79,7 @@ bscdata.filterBadDates <- function(df, verbose=FALSE, ...) {
 
     }
   }
-  if (verbose) print(paste("dataframe size after transformation:", ifelse(is.na(df),0,NROW(df)), "records"))
+#  if (verbose) print(paste("dataframe size after transformation:", ifelse(is.na(df),0,NROW(df)), "records"))
 
   return (df)
 

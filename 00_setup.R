@@ -1,19 +1,7 @@
-##To be deleted. Code moved to 00_setup.R
+#Setup scripts for CMMN Analysis
+#Replaced the 03-SetWorkingEnvironment.Rmd
 
-# Set Working Environment {#Set3}
-
-```{r tidyr3, echo = FALSE, message = FALSE, warning = FALSE}
-
-library(knitr)
-opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy = FALSE)
-
-```
-
-In this section, we load the packages we need, source the scripts we need, and assign parameter values required for the trend analysis.
-
-## Load Packages {#Set3.1}
-
-```{r load packages echo = FALSE, message = FALSE}
+#Load Packages
 
 #First time download of INLA needs to be done from the website
 #install.packages("INLA", repos=c(getOption("repos"), #INLA="https://inla.r-inla-download.org/R/stable"), dep=TRUE)
@@ -28,24 +16,20 @@ require(tidyverse)
 require(lubridate)
 require(reshape)
 
+# Create folders as necessary
+if(!dir.exists("Data")) dir.create("Data")
+if(!dir.exists("Output")) dir.create("Output")
+if(!dir.exists("Output/Plots")) dir.create("Output/Plots")
 
-```
- 
 ## Source Scripts{#Set3.2}
-
-```{r source functions, message = FALSE }
 
 source("./Functions/filterBadDates.r")
 source("./Functions/sqlSave.r")
 source("./Functions/sqlString.r")
-```
 
 ## Assign parameters that have common values across CMMN sites {#Set3.3}
 
-```{r set common parameters, message = FALSE}
-
-# THIS NEEDS TO BE CHANGED WITH UPDATES TO ANALYSIS:
-max.year <- 2021
+max.year <- 2021 #needs changes with each analysis
 
 # set output directory for analysis files; create if not already there
 out.dir <- paste("./Output/", max.year, "/", sep = "")
@@ -78,18 +62,16 @@ station.pctile2 = 95
 # set year increment for trends: every 10-year period (10-, 20-, 30-, etc)
 yr.incr <- 10
 
-```
+## Import site-specific analysis parameters 
+anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") #This will need checked and updated before each analysis
 
+## Read in Superfile
 
-## Import site-specific analysis parameters {#Set3.3}
+#In 2017, Ricky developed a 'superfile' which classifies species as migrant or other, determines whether they should be included in trend analysis, and gives the migration windows for each species at each station.  Only species classified as migrant ('M') should have trends displayed on the web, however, trends for all species are calculated and output for internal/station use.
+df.superfile <- read.csv("Data/CMMNSuperfile.csv") #This will need checked and updated periodically. New sites will need to have superfile information generated. 
 
-Provides list of sites to analyze, which contains site code, site name, seasons and sometimes start or end years.  In general, if there are specific years (or dates, or species) that should always be removed for a station prior to analysis, these should be submitted to Denis or Catherine to be included in the "baddates" database, which is called on later in the code.
+#Load bad dates into the Data folder
+bad_dates<-nc_query_table("bmde_filter_bad_dates")
+write.csv(bad_dates, "Data/bad_dates.csv")
 
-Each row in the anal.param file is a separate site AND season (i.e., sites that count both seasons are in two rows)
-
-```{r import analysis parameters, echo = FALSE, message = FALSE}
-
-anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv")
-
-```
 

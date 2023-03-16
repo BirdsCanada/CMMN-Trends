@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # PLOT ANNUAL INDICES AND TRENDS
 
 # Loop through sites and seasons and produce separate PDF plot
@@ -11,7 +16,8 @@
 
 # directory to post plots
 
-  max.yr <- 2020
+  max.yr <- 2021
+  min.yr<-2011
 
   in.dir <- paste("Output/", max.yr, "/", sep = "")
   out.dir <- paste("Plots/", max.yr, "/", sep = "")
@@ -25,7 +31,7 @@
 
 #  for(p in 7:nrow(anal.param)){  # loop through sites and seasons
     
-  p <-2 # for testing or running a single loop
+  p <-1 # for testing or running a single loop
   
 site <- as.character(anal.param[p, "site"])
 

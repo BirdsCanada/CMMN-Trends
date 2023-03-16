@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Species Specific loop
 
 From this point forward, we loop through species to:
@@ -36,7 +41,7 @@ The new try-error mostly eliminates the need for this step. Only run if you are 
 #for testing the code
 #to restart the speices code part way through the loop after it has crashed
 species.list 
-species.list <- species.list[16:215]
+species.list <- species.list[55:116]
 
 #test on single species
 #species.list<-c("CAGO")
@@ -54,7 +59,7 @@ for(k in 1:length(species.list)) {
       droplevels()
 
 # Only continue if there are observations
-  if(!is.na(sp.data$ObservationCount)) {
+ # if(!is.na(sp.data$ObservationCount)) {
   
     
 
@@ -618,7 +623,7 @@ if((write.trends.sql)) {
 
 
 } # end of if nrow statement
-} # end of if obscount statement
+#} # end of if obscount statement
 } # end of species loop
 
 ```

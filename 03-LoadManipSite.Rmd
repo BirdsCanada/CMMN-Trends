@@ -1,0 +1,110 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+# Set up Station Data {#Setup3}
+
+```{r tidyr3, echo = FALSE, message = FALSE, warning = FALSE}
+
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy = FALSE)
+
+```
+
+##Setup
+
+The setup files will get you ready for your analysis. It loads you libraries, needed tables, created directories for your outputs, and assigns some parameter values. 
+
+```{r setup}
+
+source("00_setup.R")
+
+```
+
+## Choose your CMMN station {#Setup3.1}
+
+The number assigned to `t` will correspond to the row in the analysis parameters file ('anal.param') you want to analyze (each site has a separate row).
+
+View the file to identify the row you want to select
+```{r view}
+
+view(anal.param)
+
+```
+
+Select your station
+```{r chooseSite}
+
+t <- 10
+
+```
+
+## Data manipulations {#Setup3.2}
+
+Now that you have selected the CMMN site, we are going to clean the data. These cleaning scripts do the following: 
+
+  - Load the data from the naturecounts database. You will be prompted for your password.
+  - Subset data to min and max year based on analysis parameters file.
+  - Calculate season-specific station windows (when a station normally operates).
+  - Make list of sampling dates for zero-filling.
+  - Assign Species Code, and drop species that won't be analyzed (i.e., updates to taxonomies).
+  - Use the superfile to filter to species and season of interest.
+  - Assign UNEM For LPBO data only.
+  - Save the manipulated data in the `Data` folder
+  - Generates a species list for the analysis
+  - create output tables for the analysis
+  
+First, assign 'u' your NatureCounts username and run the `prepare` scripts.
+
+```{r data manip}
+  
+u<-"dethier" 
+source("01_prepare.R")
+
+```
+
+## Data Analysis
+
+From this point forward, we loop through species to:
+
+1) Zero-fill the data. 
+
+2) Apply species-specific filters to date (seasonal migration windows), abundance (mean 10 individuals/year), occurrence (mean 5 observation days/year), and drop years with no observations.
+
+3) Run the trend analysis by looping through year periods (10-year periods)
+
+You have some manual control over the generation of output. For example, you can specify a species, list of species or all species, one season (spring, fall) or both seasons, and the time period. The default will be to loop through all species, season, and time periods. 
+
+The assignment of the response variable can also be manually changed. 
+
+
+## Reduce dataset to ObservationCount of interest.  
+
+This step is necessary for IBS and HBO-ROCK, which use banding data instead of DET data to estimate trends.  This is the place where you could modify what count variable you want to analyze.  I.e., instead of specifying "as.character(anal.param[t , "obs.var"])" in the code below, you could specify a particular count type. 
+
+NOTE: ObservationCount = ET, ObservationCount3 = Census, ObservationCount4 = banding.
+
+NOTE: this step might not be necessary if you can input the obs variable right into the analysis. Leaving for now.
+
+```{r pickObservationCountVar}
+
+in.data <- in.data %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, as.character(anal.param[t , "obs.var"]), start_date, end_date, analysis_code, lpbo_combine) 
+
+# rename count variable, so consistent for following steps
+
+names(in.data)[10] <- c("ObservationCount") 
+
+yr.data <- in.data %>%
+  filter(ObservationCount > 0) %>%
+  group_by(SpeciesCode, YearCollected, season) %>%
+  summarize(totCount = sum(ObservationCount),
+            nobs = n())
+
+
+
+```
