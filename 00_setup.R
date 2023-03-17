@@ -1,5 +1,7 @@
 #Setup scripts for CMMN Analysis
 #Replaced the 03-SetWorkingEnvironment.Rmd
+#Made not need sql outputs. If that is the case, then can be delected. 
+
 
 #Load Packages
 
@@ -21,15 +23,13 @@ if(!dir.exists("Data")) dir.create("Data")
 if(!dir.exists("Output")) dir.create("Output")
 if(!dir.exists("Output/Plots")) dir.create("Output/Plots")
 
-## Source Scripts{#Set3.2}
+## Source Scripts
 
 source("./Functions/filterBadDates.r")
 source("./Functions/sqlSave.r")
 source("./Functions/sqlString.r")
 
 ## Assign parameters that have common values across CMMN sites {#Set3.3}
-
-max.year <- 2021 #needs changes with each analysis
 
 # set output directory for analysis files; create if not already there
 out.dir <- paste("./Output/", max.year, "/", sep = "")
@@ -73,5 +73,14 @@ df.superfile <- read.csv("Data/CMMNSuperfile.csv") #This will need checked and u
 #Load bad dates into the Data folder
 bad_dates<-nc_query_table("bmde_filter_bad_dates")
 write.csv(bad_dates, "Data/bad_dates.csv")
+
+#In 2018 added an error output table to record when INLA crashes for a specific species. 
+
+error <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 4, byrow = FALSE, dimnames = NULL))
+names(error) <- c("Site", "Season", "SpeciesCode", "time.period")
+
+#only need to create the table once per analysis. Error file for recording which species were not analysed.   
+write.table(error, file = paste(out.dir,  "ErrorFile.", ".csv", sep = ""), row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+
 
 

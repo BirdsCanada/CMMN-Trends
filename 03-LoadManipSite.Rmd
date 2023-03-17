@@ -20,8 +20,11 @@ opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy = FALSE)
 
 The setup files will get you ready for your analysis. It loads you libraries, needed tables, created directories for your outputs, and assigns some parameter values. 
 
+Also assign max year of the analysis. Generally, the data in NatureCounts are 2 years behind. 
+
 ```{r setup}
 
+max.year <- 2021 #needs changes with each analysis
 source("00_setup.R")
 
 ```
@@ -37,7 +40,7 @@ view(anal.param)
 
 ```
 
-Select your station
+Select your station. 
 ```{r chooseSite}
 
 t <- 10
@@ -46,7 +49,7 @@ t <- 10
 
 ## Data manipulations {#Setup3.2}
 
-Now that you have selected the CMMN site, we are going to clean the data. These cleaning scripts do the following: 
+Now that you have selected the CMMN site, we are going to clean the data. The cleaning scripts do the following: 
 
   - Load the data from the naturecounts database. You will be prompted for your password.
   - Subset data to min and max year based on analysis parameters file.
@@ -65,6 +68,7 @@ First, assign 'u' your NatureCounts username and run the `prepare` scripts.
   
 u<-"dethier" 
 source("01_prepare.R")
+source("02_outputs.R")
 
 ```
 
@@ -78,22 +82,49 @@ From this point forward, we loop through species to:
 
 3) Run the trend analysis by looping through year periods (10-year periods)
 
-You have some manual control over the generation of output. For example, you can specify a species, list of species or all species, one season (spring, fall) or both seasons, and the time period. The default will be to loop through all species, season, and time periods. 
+You have some manual control over the generation of output. For example, you can specify a species, list of species or all species, one season (spring, fall) or both seasons, and all the time periods. The default will be to loop through all species, season, and time periods. The assignment of the response variable can also be manually changed, but the default is to use what is specified in the `analysis.parameters` file. 
 
-The assignment of the response variable can also be manually changed. 
+If you wish to specify species, season, or the response variable, you can try run the following code. If not, please proceed to the next code chunk. 
 
+```{r Change Defaults}
 
-## Reduce dataset to ObservationCount of interest.  
+#Manually change the Observation Count for M Species.
 
-This step is necessary for IBS and HBO-ROCK, which use banding data instead of DET data to estimate trends.  This is the place where you could modify what count variable you want to analyze.  I.e., instead of specifying "as.character(anal.param[t , "obs.var"])" in the code below, you could specify a particular count type. 
+#ObservationCount = DET
+responseM<-"ObservationCount"
 
-NOTE: ObservationCount = ET, ObservationCount3 = Census, ObservationCount4 = banding.
+#ObservationCount3 = census
+responseM<-"ObservationCount3"
+
+#ObservationCount4 = banding
+responseM<-"ObservationCount4"
+
+#ObservationCount7 = census + banding
+responseM<-"ObservationCount7"
+
+#Manually change the Observation Count for O Species.
+
+#ObservationCount = DET
+responseO<-"ObservationCount"
+
+#ObservationCount3 = census
+responseO<-"ObservationCount3"
+
+#ObservationCount4 = banding
+responseO<-"ObservationCount4"
+
+#ObservationCount7 = census + banding
+responseO<-"ObservationCount7"
+
+```
 
 NOTE: this step might not be necessary if you can input the obs variable right into the analysis. Leaving for now.
 
 ```{r pickObservationCountVar}
 
-in.data <- in.data %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, as.character(anal.param[t , "obs.var"]), start_date, end_date, analysis_code, lpbo_combine) 
+#if ObservationCount7 then responseM=ObservationCount3 + ObservationCount4
+
+test <- in.data %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, response[1], start_date, end_date, analysis_code, lpbo_combine) 
 
 # rename count variable, so consistent for following steps
 

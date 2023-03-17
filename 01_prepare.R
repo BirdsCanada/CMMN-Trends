@@ -7,6 +7,8 @@ site <- as.character(anal.param[t, "site"])
 site.specific <- anal.param[t, "site.specific"]
 min.species <- anal.param[t, "min.species"]
 use.trfl <- anal.param[t, "use.trfl"]
+responseM<-anal.param[t , "obs.var.M"]
+responseO<-anal.param[t , "obs.var.O"]
 
 # do not post trends to web for following sites:
 # at next analysis (up to 2018), TLBBS should have enough data to go online
@@ -282,37 +284,4 @@ write.csv(in.data, paste("Data/", site, ".csv", sep=""))
 ## Generate Species List for Analysis
 species.list <- unique(in.data$SpeciesCode)
 
-
-#Create output tables
-
-## Set up output tables
-#This is in a separate file because if loop through species fails, don't want to re-write these files and delete everything that has already been done. Can then just re-start the loop at the next species, and keep going.
-
-## Create text file for indices
-
-indices.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 13, byrow = FALSE,
-                                    dimnames = NULL))
-names(indices.csv) <- c("results_code", "area_code", "year", "season", "period", "species_code", "species_id", "index", "stderr", "stdev", "upper_ci", "lower_ci", "LOESS_index")  
-
-write.table(indices.csv, file = paste(out.dir, 
-                                      site, ".AnnualIndices.", max.yr.filt, ".csv", sep = ""), 
-            row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
-
-
-## Create text file for trends (appending year periods into one file)
-trends.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 42, 
-                                   byrow = FALSE, dimnames = NULL))
-names(trends.csv) <- c("results_code", "version", "area_code", "species_code", "species_id", "season", "period", "years", "year_start", "year_end", "trnd", "index_type", "upper_ci", "lower_ci", "stderr", "model_type", "model_fit", "percent_change", "percent_change_low", "percent_change_high", "prob_decrease_0", "prob_decrease_25", "prob_decrease_30", "prob_decrease_50", "prob_increase_0", "prob_increase_33", "prob_increase_100", "reliability", "precision_num", "precision_cat", "coverage_num", "coverage_cat", "goal", "goal_lower", "sample_size", "sample_total", "subtitle", "prob_LD", "prob_MD", "prob_LC", "prob_MI", "prob_LI")
-
-write.table(trends.csv, file = paste(out.dir, 
-                                     site, ".Trends.", max.yr.filt, ".csv", sep = ""), 
-            row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
-
-#In 2018 added an error output table to record when INLA crashes for a specific species. 
-
-error <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 4, byrow = FALSE, dimnames = NULL))
-names(error) <- c("Site", "Season", "SpeciesCode", "time.period")
-
-#only need to create the table once per analysis   
-write.table(error, file = paste(out.dir,  "ErrorFile.", max.yr.filt, ".csv", sep = ""), row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
 
