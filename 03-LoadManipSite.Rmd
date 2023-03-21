@@ -122,7 +122,7 @@ NOTE: this step might not be necessary if you can input the obs variable right i
 
 ```{r pickObservationCountVar}
 
-#if ObservationCount7 then responseM=ObservationCount3 + ObservationCount4
+in.data$ObservationCount7=in.data$ObservationCount3+in.data$ObservationCount4
 
 test <- in.data %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, response[1], start_date, end_date, analysis_code, lpbo_combine) 
 
