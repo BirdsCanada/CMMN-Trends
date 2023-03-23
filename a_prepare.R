@@ -1,20 +1,22 @@
 source("00_setup.R")
 
-#sets parameters for your site
-collection <- as.character(anal.param[t, "collection"])
-station <- as.character(anal.param[t, "station"])
-site <- as.character(anal.param[t, "site"])
-site.specific <- anal.param[t, "site.specific"]
-min.species <- anal.param[t, "min.species"]
-use.trfl <- anal.param[t, "use.trfl"]
-responseM<-anal.param[t , "obs.var.M"]
-responseO<-anal.param[t , "obs.var.O"]
-
+  collection <- as.character(anal.param[t, "collection"])
+  station <- as.character(anal.param[t, "station"])
+  site <- as.character(anal.param[t, "site"])
+  site.specific <- anal.param[t, "site.specific"]
+  min.species <- anal.param[t, "min.species"]
+  use.trfl <- anal.param[t, "use.trfl"]
+    
 ## Import Data
 
-#Import data for the specified station (all species, sites, seasons) using the naturecounts R package. 
+#Import data for the specified station (all species, sites, seasons) using the naturecounts R package. First, it will look to see if you have a copy saved in the data directory. 
 
-in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = u, info="Trend analysis")
+in.data <-try(read.csv(paste(out.dir, site, "_Raw_Superfile.csv", sep="")))
+event.data<-try(read.csv(paste(out.dir, site, "_Event_Superfile.csv", sep="")))
+
+if(class(in.data) == 'try-error'| class(event.data) == 'try-error'){
+
+in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = u, info="CMMN Superfile Scripts", years=c(min.year, max.year))
 
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
 
@@ -47,8 +49,8 @@ in.data <- in.data %>%
          season = if_else(doy < 180, "Spring", "Fall"))
 
 # note that this assumes that if stations that are no longer collecting are to be analyzed, that the last year is specified in the anal.param table:
-min.yr.filt <- ifelse(is.na(anal.param[t,"min.year"]),
-                      min(in.data$YearCollected), anal.param[t,"min.year"])
+min.yr.filt <- ifelse(is.na(min.year),
+                      min(in.data$YearCollected), min.year)
 
 max.yr.filt <- ifelse(is.na(anal.param[t,"max.year"]),
                       max.year, anal.param[t,"max.year"])
@@ -72,7 +74,7 @@ df.totYears <- in.data %>%
   as.data.frame()
 
 df.sampleDates <- in.data %>%
-  select(SurveyAreaIdentifier, season, YearCollected, doy, as.character(anal.param[t , "obs.var"])) %>%
+  select(SurveyAreaIdentifier, season, YearCollected, doy, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4) %>%
   group_by(SurveyAreaIdentifier, season, YearCollected, doy) %>%
   summarize(nspecies = n()) %>%
   filter(nspecies >= min.species) %>% # at least 10 individuals observed, usually
@@ -91,7 +93,7 @@ in.data <- left_join(in.data, df.sampleDates, by = c("SurveyAreaIdentifier", "se
 
 #create events data for zero filling
 event.data <- in.data %>%
-  filter(as.character(anal.param[t , "obs.var"]) > 0) %>%
+  filter(ObservationCount > 0) %>%
   group_by(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season) %>%
   mutate(nspecies = n()) %>%
   filter(nspecies > min.species) %>% # assuming at least one individual detected each day. This could be modified, for example, to include only dates when at least 10 species were detected.
@@ -171,7 +173,6 @@ sp.list <- left_join(sp.list1, sp.code, by = c("SpeciesCode" = "BSCDATA")) %>%
 in.data <- left_join(select(in.data, -species_id), sp.list, by = "SpeciesCode") %>%
   filter(!is.na(species_id))
 
-
 ## get total count by species, date, station
 in.data$ObservationCount<-as.numeric(in.data$ObservationCount)
 in.data$ObservationCount2<-as.numeric(in.data$ObservationCount2)
@@ -188,22 +189,6 @@ as.data.frame()
 
 ## create new response variable for census + band
 in.data$ObservationCount7=in.data$ObservationCount3+in.data$ObservationCount4
-
-df.superfile <- filter(df.superfile, project_id == project) %>%
-  mutate(SurveyAreaIdentifier = SiteCode,
-         SpeciesCode = species_code,
-         season = period) %>%
-  select(-SiteCode, -species_code, -period) %>%
-  filter(include == 1, !(analysis_code == "R"), SurveyAreaIdentifier %in% site.list) %>%
-  droplevels()
-
-sp.analyze <- df.superfile %>%
-  select(SurveyAreaIdentifier, SpeciesCode, season, start_date, end_date, analysis_code, lpbo_combine) %>%
-  distinct() %>%
-  droplevels()
-
-in.data <- left_join(sp.analyze, in.data, by = c("SurveyAreaIdentifier", "SpeciesCode", "season"), multiple = "all") %>%
-  droplevels()
 
 ## Run 'Assign UNEM.R' For LPBO data only!!!  
 #This section modifies empidonax values by assigning unknown empidonax to  LEFL, YBFL, TRFL by the proportional representation of each species on each doy (across years) in ET data. Might use banding data (ObservationCount4), but not available digitally pre-1984. NOTE that by running this, banding data and census data are erased from in.data for empid species. Do not include ACFL because there as so few it would make little impact.
@@ -258,12 +243,18 @@ if(site == "LPBO") {
     select(-addObsET, -addObsCensus) %>%
     filter(SpeciesCode != "UNEM")
   
-}
+  } #end if site = LPBO
+    
 
 #write clean data to file
-write.csv(in.data, paste("Data/", site, ".csv", sep=""))
+write.csv(in.data, paste(out.dir, site, "_Raw_Superfile.csv", sep=""), row.names = FALSE)
+write.csv(event.data, paste(out.dir, site, "_Event_Superfile.csv", sep=""), row.names = FALSE)
+
+  } #end of try catch, which looks for proceed data on the out.dir first
 
 ## Generate Species list for analysis
 species.list <- unique(in.data$SpeciesCode)
+
+
 
 

@@ -18,6 +18,13 @@ require(tidyverse)
 require(lubridate)
 require(reshape)
 
+#require for ShareData Plotting
+require(ggplot2)
+require(plotly)
+require(DT)
+require(d3scatter)
+require(crosstalk)
+
 # Create folders as necessary
 if(!dir.exists("Data")) dir.create("Data")
 if(!dir.exists("Output")) dir.create("Output")
