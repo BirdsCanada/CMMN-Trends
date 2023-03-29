@@ -32,7 +32,6 @@ Also assign max year of the analysis. Generally, the data in NatureCounts are 2 
 
 max.year <- 2021 #needs changes with each analysis
 min.year <- 2000 #how far back do you want the data to go. 
-source("00_setup.R")
 
 ```
 
@@ -43,16 +42,19 @@ The number assigned to `t` will correspond to the row in the analysis parameters
 View the file to identify the row you want to select
 ```{r view}
 
+#This will need checked and updated before each analysis
+anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") 
 view(anal.param)
 
 ```
 
 ##Select your station, or all stations in the analysis file if you wish to run a loop. 
 
-**We may also choose to create a loop that runs through wach stations and processes the data for the superfile analysis**
+**We may also choose to create a loop that runs through each stations and processes the data for the superfile analysis**
 ```{r chooseSite}
 
-t <- 10
+#Select a single site based on row number in anal.param
+t <- 10 
 
 ```
 
@@ -62,6 +64,7 @@ Now that you have selected the CMMN site, we are going to clean the data. The cl
 
   - Load the data from the naturecounts database. You will be prompted for your password.
   - Subset data to min and max year based on analysis parameters file.
+  - Assigns seasons (spring and fall)
   - Calculate season-specific station windows (when a station normally operates).
   - Make list of sampling dates for zero-filling.
   - Assign Species Code, and drop species that won't be analyzed (i.e., updates to taxonomies).
@@ -75,7 +78,7 @@ First, assign 'u' your NatureCounts username and run the `prepare` scripts.
 
 ```{r data manip}
   
-u<-"dethier"  #enter you NatureCOunts ID
+u<-"dethier"  #enter you NatureCounts ID
 source("a_prepare.R")
 
 ```
@@ -85,15 +88,20 @@ source("a_prepare.R")
 We are now ready to create our data summaries.  
 
   - Loop through each species in the `species.list` which was create in the last step.
-  - Zero fill the data frame using the `event.data` 
-  - calculate the mean count per doy for each response variable in each season, where
+  - Zero-fill the data frame using the `event.data` 
+  - Drop any species from further analysis that falls below analysis thresholds for either criterion.
+      Seasons where mean number of individuals/year is < 10 *based on DET*
+      Seasons where mean number of observation days/year is < 5 *based on DET*
+  - Calculate the mean count per doy for each response variable in each season, where
   
     ObservationCount = DET
     ObservationCount3 = census
     ObservationCount4 = banding
     ObservationCount7 = census + banding
     
-The code also calculates the proportion of years a species was detected on a specific day and the total number of years a site was monitored. 
+  - Across all years, count up N of years for which each Day-of-year (doy) has a *DET* recorded.
+  -	Calculate % of all years with data for that doy *based on DET*
+
 
 ```{r Change Defaults}
 
@@ -101,15 +109,18 @@ source("b_analysis.R")
 
 ```
 
+## Classification Plots
 
-## Plot Data
+    
+-	Pick the doy at which % rises above 67%.  (Usually this is clear, but the odd day earlier may meet criterion, and vice versa, so some judgement needed.)
 
-Now that we have the output for a station, we can plot the data using an interactive tool 
+-	For each half-year, plot mean daily N vs. doy.  If possible, add a marker to graph showing start and end of coverage period. (Don’t have to be beautiful; just label with spp name and season. (Including the period before and after coverage period is helpful for assessing whether spp is present all summer or in winter.)
+
+-	Examine plots to classify.  (Having done so much of this, I can do it quite quickly and with considerable confidence, so I’d be happy to take on this part if you could produce the graphs.)
+
 
 ```{r plot}
 
-mig.data<-read.csv(paste(out.dir, site, ".SuperData.csv", sep = ""))
-
-
+source("c_plots.R")
 
 ```

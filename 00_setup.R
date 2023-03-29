@@ -1,6 +1,6 @@
 #Setup scripts for CMMN Analysis
 #Replaced the 03-SetWorkingEnvironment.Rmd
-#Made not need sql outputs. If that is the case, then can be delected. 
+#May not need sql outputs. If that is the case, then can be delected. 
 
 
 #Load Packages
@@ -17,13 +17,7 @@ require(INLA)
 require(tidyverse)
 require(lubridate)
 require(reshape)
-
-#require for ShareData Plotting
-require(ggplot2)
-require(plotly)
-require(DT)
-require(d3scatter)
-require(crosstalk)
+require(ggpubr)
 
 # Create folders as necessary
 if(!dir.exists("Data")) dir.create("Data")
@@ -78,8 +72,15 @@ anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") #This will need
 df.superfile <- read.csv("Data/CMMNSuperfile.csv") #This will need checked and updated periodically. New sites will need to have superfile information generated. 
 
 #Load bad dates into the Data folder
+
+bad_dates<-try(read.csv("Data/bad_dates.csv"))
+
+if(class(bad_dates) == 'try-error'){
+
 bad_dates<-nc_query_table("bmde_filter_bad_dates")
 write.csv(bad_dates, "Data/bad_dates.csv")
+
+}#end try catch
 
 #In 2018 added an error output table to record when INLA crashes for a specific species. 
 

@@ -73,6 +73,8 @@ df.totYears <- in.data %>%
   summarize(totYears = n()) %>%
   as.data.frame()
 
+## the following gets the start and end dates for each station and season
+## uses the observation variable that is being analyzed,
 df.sampleDates <- in.data %>%
   select(SurveyAreaIdentifier, season, YearCollected, doy, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4) %>%
   group_by(SurveyAreaIdentifier, season, YearCollected, doy) %>%
