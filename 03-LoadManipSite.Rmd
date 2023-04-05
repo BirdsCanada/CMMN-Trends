@@ -25,7 +25,6 @@ Also assign max year of the analysis. Generally, the data in NatureCounts are 2 
 ```{r setup}
 
 max.year <- 2021 #needs changes with each analysis
-source("00_setup.R")
 
 ```
 
@@ -36,6 +35,9 @@ The number assigned to `t` will correspond to the row in the analysis parameters
 View the file to identify the row you want to select
 ```{r view}
 
+## Import site-specific analysis parameters 
+##This will need checked and updated before each analysis
+anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") 
 view(anal.param)
 
 ```
@@ -43,7 +45,7 @@ view(anal.param)
 Select your station. 
 ```{r chooseSite}
 
-t <- 10
+t <- 3
 
 ```
 
@@ -54,7 +56,7 @@ Now that you have selected the CMMN site, we are going to clean the data. The cl
   - Load the data from the naturecounts database. You will be prompted for your password.
   - Subset data to min and max year based on analysis parameters file.
   - Calculate season-specific station windows (when a station normally operates).
-  - Make list of sampling dates for zero-filling.
+  - Make list of sampling dates for zero-filling (based on *DET*)
   - Assign Species Code, and drop species that won't be analyzed (i.e., updates to taxonomies).
   - Use the superfile to filter to species and season of interest.
   - Assign UNEM For LPBO data only.
@@ -74,47 +76,18 @@ source("02_outputs.R")
 
 ## Data Analysis
 
-From this point forward, we loop through species to:
+From this point forward, we loop through species and season:
 
-1) Zero-fill the data. 
+1) Zero-fill the data using the `events` matrix 
 
 2) Apply species-specific filters to date (seasonal migration windows), abundance (mean 10 individuals/year), occurrence (mean 5 observation days/year), and drop years with no observations.
 
 3) Run the trend analysis by looping through year periods (10-year periods)
 
-You have some manual control over the generation of output. For example, you can specify a species, list of species or all species, one season (spring, fall) or both seasons, and all the time periods. The default will be to loop through all species, season, and time periods. The assignment of the response variable can also be manually changed, but the default is to use what is specified in the `analysis.parameters` file. 
-
-If you wish to specify species, season, or the response variable, you can try run the following code. If not, please proceed to the next code chunk. 
 
 ```{r Change Defaults}
 
-#Manually change the Observation Count for M Species.
-
-#ObservationCount = DET
-responseM<-"ObservationCount"
-
-#ObservationCount3 = census
-responseM<-"ObservationCount3"
-
-#ObservationCount4 = banding
-responseM<-"ObservationCount4"
-
-#ObservationCount7 = census + banding
-responseM<-"ObservationCount7"
-
-#Manually change the Observation Count for O Species.
-
-#ObservationCount = DET
-responseO<-"ObservationCount"
-
-#ObservationCount3 = census
-responseO<-"ObservationCount3"
-
-#ObservationCount4 = banding
-responseO<-"ObservationCount4"
-
-#ObservationCount7 = census + banding
-responseO<-"ObservationCount7"
+source("04_analysis.R")
 
 ```
 
@@ -122,13 +95,6 @@ NOTE: this step might not be necessary if you can input the obs variable right i
 
 ```{r pickObservationCountVar}
 
-
-
-test <- in.data %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, response[1], start_date, end_date, analysis_code, lpbo_combine) 
-
-# rename count variable, so consistent for following steps
-
-names(in.data)[10] <- c("ObservationCount") 
 
 yr.data <- in.data %>%
   filter(ObservationCount > 0) %>%

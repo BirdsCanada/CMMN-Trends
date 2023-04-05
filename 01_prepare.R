@@ -14,6 +14,12 @@ responseO<-anal.param[t , "obs.var.O"]
 
 #Import data for the specified station (all species, sites, seasons) using the naturecounts R package. 
 
+#first look in file. If it does not exist, download from database.
+in.data <-try(read.csv(paste(out.dir, site, "_Raw.csv", sep="")))
+event.data<-try(read.csv(paste(out.dir, site, "_Event.csv", sep="")))
+
+if(class(in.data) == 'try-error'| class(event.data) == 'try-error'){
+
 in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = u, info="Trend analysis")
 
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
@@ -72,7 +78,7 @@ df.totYears <- in.data %>%
   as.data.frame()
 
 df.sampleDates <- in.data %>%
-  select(SurveyAreaIdentifier, season, YearCollected, doy, as.character(anal.param[t , "obs.var"])) %>%
+  select(SurveyAreaIdentifier, season, YearCollected, doy, ObservationCount) %>%
   group_by(SurveyAreaIdentifier, season, YearCollected, doy) %>%
   summarize(nspecies = n()) %>%
   filter(nspecies >= min.species) %>% # at least 10 individuals observed, usually
@@ -91,7 +97,7 @@ in.data <- left_join(in.data, df.sampleDates, by = c("SurveyAreaIdentifier", "se
 
 #create events data for zero filling
 event.data <- in.data %>%
-  filter(as.character(anal.param[t , "obs.var"]) > 0) %>%
+  filter(ObservationCount > 0) %>%
   group_by(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season) %>%
   mutate(nspecies = n()) %>%
   filter(nspecies > min.species) %>% # assuming at least one individual detected each day. This could be modified, for example, to include only dates when at least 10 species were detected.
@@ -170,7 +176,6 @@ sp.list <- left_join(sp.list1, sp.code, by = c("SpeciesCode" = "BSCDATA")) %>%
 
 in.data <- left_join(select(in.data, -species_id), sp.list, by = "SpeciesCode") %>%
   filter(!is.na(species_id))
-
 
 ## get total count by species, date, station
 in.data$ObservationCount<-as.numeric(in.data$ObservationCount)
@@ -258,10 +263,13 @@ if(site == "LPBO") {
     select(-addObsET, -addObsCensus) %>%
     filter(SpeciesCode != "UNEM")
   
-}
+} #end if LPBO
 
 #write clean data to file
-write.csv(in.data, paste("Data/", site, ".csv", sep=""))
+write.csv(in.data, paste(out.dir, site, "_Raw.csv", sep=""), row.names = FALSE)
+write.csv(event.data, paste(out.dir, site, "_Event.csv", sep=""), row.names = FALSE)
+
+} #end of try catch, which looks for proceed data on the out.dir first
 
 ## Generate Species list for analysis
 species.list <- unique(in.data$SpeciesCode)
