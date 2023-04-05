@@ -44,7 +44,7 @@ View the file to identify the row you want to select
 
 #This will need checked and updated before each analysis
 anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") 
-view(anal.param)
+View(anal.param)
 
 ```
 
@@ -54,7 +54,7 @@ view(anal.param)
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
-t <- 10 
+t <- 2 #test BBO
 
 ```
 
@@ -63,7 +63,6 @@ t <- 10
 Now that you have selected the CMMN site, we are going to clean the data. The cleaning scripts do the following: 
 
   - Load the data from the naturecounts database. You will be prompted for your password.
-  - Subset data to min and max year based on analysis parameters file.
   - Assigns seasons (spring and fall)
   - Calculate season-specific station windows (when a station normally operates).
   - Make list of sampling dates for zero-filling.
@@ -121,6 +120,6 @@ source("b_analysis.R")
 
 ```{r plot}
 
-source("c_plots.R")
+source("c_plot.R")
 
 ```

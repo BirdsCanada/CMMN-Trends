@@ -73,14 +73,14 @@ df.superfile <- read.csv("Data/CMMNSuperfile.csv") #This will need checked and u
 
 #Load bad dates into the Data folder
 
-bad_dates<-try(read.csv("Data/bad_dates.csv"))
+#bad_dates<-try(read.csv("Data/bad_dates.csv"))
 
-if(class(bad_dates) == 'try-error'){
+#if(class(bad_dates) == 'try-error'){
 
 bad_dates<-nc_query_table("bmde_filter_bad_dates")
 write.csv(bad_dates, "Data/bad_dates.csv")
 
-}#end try catch
+#}#end try catch
 
 #In 2018 added an error output table to record when INLA crashes for a specific species. 
 
@@ -88,7 +88,36 @@ error <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 4, byrow = FALSE, dimn
 names(error) <- c("Site", "Season", "SpeciesCode", "time.period")
 
 #only need to create the table once per analysis. Error file for recording which species were not analysed.   
-write.table(error, file = paste(out.dir,  "ErrorFile.", ".csv", sep = ""), row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+write.table(error, file = paste(out.dir,  "ErrorFile", ".csv", sep = ""), row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+
+#Orthogonal legendre polynomial transformation to centralize day and day^2 covariates
+# Some examples here: https://online.stat.psu.edu/stat502_fa21/lesson/10/10.2   
+
+poly.legendre <- function(x, degree, minx, maxx){
+  
+  if (min(x) < minx) stop("min(x) < minx")
+  if (max(x) > maxx) stop("max(x) > maxx")
+  
+  if (degree > 4) stop("Degree must be < 5")
+  
+  lg <- length(x)
+  
+  z <- data.frame(x)
+  
+  z$xP1 <- 2 * (x - minx) / (maxx - minx) - 1
+  z$xP2 <- (3 * z$xP1 * z$xP1 - 1) / 2
+  if(degree > 2) z$xP3 <- (5 * z$xP2 * z$xP1 - 2 * z$xP1) / 3
+  if(degree > 3) z$xP4 <- (7 * z$xP3 * z$xP1 - 3 * z$xP2) / 4
+  
+  z  <- z[, -1]
+}
+
+
+##Load generation length table
+
+gen<-nc_query_table("vwResultsCosewicSpecies", username = "dethier")
+gen<-gen %>% select(speciesID, generation)
+write.csv(gen, "Data/generation.csv")
 
 
 

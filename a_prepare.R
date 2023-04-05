@@ -48,57 +48,29 @@ in.data <- in.data %>%
          doy = yday(date),
          season = if_else(doy < 180, "Spring", "Fall"))
 
-# note that this assumes that if stations that are no longer collecting are to be analyzed, that the last year is specified in the anal.param table:
-min.yr.filt <- ifelse(is.na(min.year),
-                      min(in.data$YearCollected), min.year)
-
-max.yr.filt <- ifelse(is.na(anal.param[t,"max.year"]),
-                      max.year, anal.param[t,"max.year"])
-
-# Subset data to specified year range
-in.data <- in.data %>%
-  filter(YearCollected >= min.yr.filt & YearCollected <= max.yr.filt)
-
-#print("year range:"); print(range(in.data$YearCollected))
 
 # get the minimum number of years a species must be detected to be included. Could be MUCH more conservative... currently using 1/2 of years surveyed, but those species might also get kicked out by abundance filters below.
 min.yrs.detect <- trunc(length(unique(in.data$YearCollected))/2) 
 
-# total number of years each doy surveyed at each site (include 0-obs counts)
-# this will be used later in species-specific loop to calculate proportion of years observed
-df.totYears <- in.data %>%
-  select(SurveyAreaIdentifier, YearCollected, doy) %>%
-  distinct() %>%
-  group_by(SurveyAreaIdentifier, doy) %>%
-  summarize(totYears = n()) %>%
-  as.data.frame()
-
 ## the following gets the start and end dates for each station and season
 ## uses the observation variable that is being analyzed,
-df.sampleDates <- in.data %>%
-  select(SurveyAreaIdentifier, season, YearCollected, doy, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4) %>%
-  group_by(SurveyAreaIdentifier, season, YearCollected, doy) %>%
-  summarize(nspecies = n()) %>%
-  filter(nspecies >= min.species) %>% # at least 10 individuals observed, usually
-  group_by(SurveyAreaIdentifier, season) %>%
-  summarize(
-    start_doy = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
-                               na.rm = TRUE), digits = 0)[[1]],
-    end_doy = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
-                             na.rm = TRUE), digits = 0)[[2]])
-
-## filter main data frame by migration windows
-## we do this by merging and dropping observations outside the start and end dates
-in.data <- left_join(in.data, df.sampleDates, by = c("SurveyAreaIdentifier", "season")) %>%
-  filter(doy >= start_doy, doy <= end_doy) %>%
-  select(-start_doy, -end_doy)
+#df.sampleDates <- in.data %>%
+#  select(SurveyAreaIdentifier, season, YearCollected, doy, ObservationCount) %>%
+#  group_by(SurveyAreaIdentifier, season, YearCollected, doy) %>%
+#  summarize(nspecies = n()) %>%
+#  filter(nspecies >= min.species) %>% # at least 10 individuals observed, usually
+#  group_by(SurveyAreaIdentifier, season) %>%
+#  summarize(
+#    start_95 = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
+#                               na.rm = TRUE), digits = 0)[[1]],
+#    end_95 = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
+#                             na.rm = TRUE), digits = 0)[[2]])
 
 #create events data for zero filling
 event.data <- in.data %>%
   filter(ObservationCount > 0) %>%
   group_by(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season) %>%
   mutate(nspecies = n()) %>%
-  filter(nspecies > min.species) %>% # assuming at least one individual detected each day. This could be modified, for example, to include only dates when at least 10 species were detected.
   select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season) %>% 
   distinct() %>%
   ungroup() %>%
@@ -160,20 +132,20 @@ in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "W
   group_by(SpeciesCode) %>%
   tally()
 
-## re-assign speciesID based on the new species codes
-## This ensures species codes/ids are consistent across stations and
-## years/days within a station
 
-sp.list1 <- select(in.data, SpeciesCode) %>%
-  distinct()
+#total number of years each doy surveyed at each site (include 0-obs counts)
+df.totYears<-NULL
+df.totYears <- in.data %>%
+  select(SurveyAreaIdentifier, YearCollected, doy) %>%
+  distinct() %>%
+  group_by(SurveyAreaIdentifier, doy) %>%
+  summarize(totYears = n()) %>%
+  as.data.frame()%>% 
+  mutate(prop_year= totYears/((max.year-min.year)+1)) %>% 
+  mutate(season = if_else(doy < 180, "Spring", "Fall"))
 
-sp.code<-search_species_code()
+write.csv(df.totYears, paste(out.dir, site, "_YearsSurvey.csv", sep=""), row.names = FALSE)
 
-sp.list <- left_join(sp.list1, sp.code, by = c("SpeciesCode" = "BSCDATA")) %>%
-  filter(!is.na(SpeciesCode))
-
-in.data <- left_join(select(in.data, -species_id), sp.list, by = "SpeciesCode") %>%
-  filter(!is.na(species_id))
 
 ## get total count by species, date, station
 in.data$ObservationCount<-as.numeric(in.data$ObservationCount)
@@ -191,6 +163,8 @@ as.data.frame()
 
 ## create new response variable for census + band
 in.data$ObservationCount7=in.data$ObservationCount3+in.data$ObservationCount4
+## add the start and end dates for the 95% station survey window.
+#in.data <- left_join(in.data, df.sampleDates, by = c("SurveyAreaIdentifier", "season")) 
 
 ## Run 'Assign UNEM.R' For LPBO data only!!!  
 #This section modifies empidonax values by assigning unknown empidonax to  LEFL, YBFL, TRFL by the proportional representation of each species on each doy (across years) in ET data. Might use banding data (ObservationCount4), but not available digitally pre-1984. NOTE that by running this, banding data and census data are erased from in.data for empid species. Do not include ACFL because there as so few it would make little impact.
