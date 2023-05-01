@@ -2,13 +2,13 @@ source("00_setup.R")
 
 mig.data<-read.csv(paste(out.dir, site, "_SuperData.csv", sep = ""))
 
-
 year.data<-read.csv(paste(out.dir, site, "_YearsSurvey.csv", sep=""))
 year.data$season_f<-factor(year.data$season, levels=c("Spring", "Fall"))
 year.data<- year.data[order(year.data$doy),]
 
-doy<-year.data %>% group_by(season_f) %>% filter(prop_year>0.68) %>% summarise(min=min(doy), max=max(doy))
 
+doy<-year.data %>% group_by(season_f) %>% filter(prop_year>0.68) %>% summarise(min=min(doy), max=max(doy))
+write.csv(doy, paste(out.dir, site, "_CoverageDOY.csv"), row.names=FALSE)
 
 out.plot<-NULL
 
@@ -49,7 +49,7 @@ for(n in 1:length(species.list2)) {
 
 out.plot[[n]]<-ggplot(data = mean.plot, aes(x=doy, y=value, colour=variable))+
   geom_point()+
-  facet_wrap(~season_f, scales = "free_x", ncol=1 )+
+  facet_wrap(~season_f, scales = "free", ncol=1 )+
   geom_smooth(se=FALSE)+
   geom_vline(data = data_startline, aes(xintercept = min))+
   geom_vline(data = data_endline, aes(xintercept = max))+
@@ -63,22 +63,21 @@ out.plot[[n]]<-ggplot(data = mean.plot, aes(x=doy, y=value, colour=variable))+
 } #end species loop
 
 #Print proportion of years a doy was surveyed
-out.plot0<-ggplot()+
-  geom_point(year.data, aes(x=doy, y=prop_year, colour=season))+
-  geom_point(doy, aes(x=doy, y=prop_year))+
-  facet_wrap(~season_f, scales = "free", ncol=1)+
-  geom_smooth(se=FALSE)+
-  geom_hline(yintercept = 0.67)+
-  xlab("Day of Year")+
-  ylab("Proportion doy surveyed")+
+#out.plot0<-ggplot()+
+#  geom_point(year.data, aes(x=doy, y=prop_year, colour=season))+
+#  facet_wrap(~season_f, scales = "free", ncol=1)+
+#  geom_smooth(se=FALSE)+
+#  geom_hline(yintercept = 0.67)+
+#  xlab("Day of Year")+
+#  ylab("Proportion doy surveyed")+
   #theme_classic()+
-  scale_x_continuous(breaks=scales::breaks_width(width=10))
+#  scale_x_continuous(breaks=scales::breaks_width(width=10))
   
 
 pdf(paste(out.dir, site, "_", "Migration.pdf", sep = ""),
     height = 10, width = 8, paper = "letter")
   
-    print(out.plot0)
+#    print(out.plot0)
 for(r in 1:length(out.plot)){
     try(print(out.plot[[r]]), silent = TRUE)
 }
