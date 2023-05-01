@@ -73,14 +73,14 @@ df.superfile <- read.csv("Data/CMMNSuperfile.csv") #This will need checked and u
 
 #Load bad dates into the Data folder
 
-#bad_dates<-try(read.csv("Data/bad_dates.csv"))
+bad_dates<-try(read.csv("Data/bad_dates.csv"))
 
-#if(class(bad_dates) == 'try-error'){
+if(class(bad_dates) == 'try-error'){
 
 bad_dates<-nc_query_table("bmde_filter_bad_dates")
 write.csv(bad_dates, "Data/bad_dates.csv")
 
-#}#end try catch
+}#end try catch
 
 #In 2018 added an error output table to record when INLA crashes for a specific species. 
 
