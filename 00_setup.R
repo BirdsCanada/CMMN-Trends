@@ -22,7 +22,6 @@ require(ggpubr)
 # Create folders as necessary
 if(!dir.exists("Data")) dir.create("Data")
 if(!dir.exists("Output")) dir.create("Output")
-if(!dir.exists("Output/Plots")) dir.create("Output/Plots")
 
 ## Source Scripts
 
@@ -35,6 +34,14 @@ source("./Functions/sqlString.r")
 # set output directory for analysis files; create if not already there
 out.dir <- paste("./Output/", max.year, "/", sep = "")
 dir.create(out.dir, showWarnings=FALSE, recursive=TRUE)
+
+# set data directory for analysis files; create if not already there
+data.dir <- paste("./Data/", max.year, "/", sep = "")
+dir.create(data.dir, showWarnings=FALSE, recursive=TRUE)
+
+# set data directory for analysis files; create if not already there
+plot.dir <- paste("./Plots/", max.year, "/", sep = "")
+dir.create(data.dir, showWarnings=FALSE, recursive=TRUE)
 
 # get list of species common names, to be used later
 
@@ -115,7 +122,7 @@ poly.legendre <- function(x, degree, minx, maxx){
 
 ##Load generation length table
 
-gen<-nc_query_table("vwResultsCosewicSpecies", username = "dethier")
+gen<-nc_query_table(username=ID, "vwResultsSocbSpecies")
 gen<-gen %>% select(speciesID, generation)
 write.csv(gen, "Data/generation.csv")
 

@@ -15,12 +15,13 @@ responseO<-anal.param[t , "obs.var.O"]
 #Import data for the specified station (all species, sites, seasons) using the naturecounts R package. 
 
 #first look in file. If it does not exist, download from database.
-in.data <-try(read.csv(paste(out.dir, site, "_Raw.csv", sep="")))
+in.data <-try(read.csv(paste(data.dir, site, "_Raw_Data.csv", sep="")))
 event.data<-try(read.csv(paste(out.dir, site, "_Event.csv", sep="")))
 
 if(class(in.data) == 'try-error'| class(event.data) == 'try-error'){
 
 in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = u, info="Trend analysis")
+write.csv(in.data, paste(data.dir, site, "_Raw_Data.csv", sep=""), row.names = FALSE)
 
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
 
