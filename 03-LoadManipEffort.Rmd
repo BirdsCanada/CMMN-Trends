@@ -37,7 +37,7 @@ View(anal.param)
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
-t <- 2 #test BBO
+t <- 21 #test
 
 ```
 

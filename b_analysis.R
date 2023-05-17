@@ -1,14 +1,10 @@
-source("00_setup.R")
-
 # If the data exists, load, otherwise process in.data
 
 data<-NULL
-data <-try(read.csv(paste(out.dir, site, "_SuperData.csv", sep="")), silent =TRUE)
 
-if(class(data) == 'try-error'){
+in.data <-read.csv(paste(data.dir, site, "_Raw_Superfile.csv", sep="")) 
+event.data<-read.csv(paste(data.dir, site, "_Event_Superfile.csv", sep="")) 
 
-in.data <-read.csv(paste(out.dir, site, "_Raw_Superfile.csv", sep="")) 
-event.data<-read.csv(paste(out.dir, site, "_Event_Superfile.csv", sep="")) 
 event.data$YearCollected<-as.integer(event.data$YearCollected)
 event.data$MonthCollected<-as.integer(event.data$MonthCollected)
 event.data$DayCollected<-as.integer(event.data$DayCollected)
@@ -18,7 +14,7 @@ event.data$date<-as.character(event.data$date)
 sp.data <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 8, byrow = FALSE,
                                     dimnames = NULL))
 names(sp.data) <- c("SurveyAreaIdentifier", "species", "doy", "season", "mean_Obs", "mean_Obs3", "mean_Obs4", "mean_Obs7")  
-write.table(sp.data, file = paste(out.dir, 
+write.table(sp.data, file = paste(data.dir, 
                                       site, "_SuperData.csv", sep = ""), 
             row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
 
@@ -92,7 +88,7 @@ for(k in 1:length(species.list)) {
 
   #write the species specific output to the site specific table  
   write.table(sp.data, 
-              file = paste(out.dir, site, "_SuperData.csv", sep = ""),
+              file = paste(data.dir, site, "_SuperData.csv", sep = ""),
               row.names = FALSE, 
               append = TRUE, 
               quote = FALSE, 
@@ -101,6 +97,6 @@ for(k in 1:length(species.list)) {
   
    } #end if nrow
 } #end sp loop
-} #end try error
+
 
 

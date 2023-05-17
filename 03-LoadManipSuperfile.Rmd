@@ -31,7 +31,7 @@ Also assign max year of the analysis. Generally, the data in NatureCounts are 2 
 ```{r setup}
 
 max.year <- 2021 #needs changes with each analysis
-min.year <- 2000 #how far back do you want the data to go. 
+min.year <- 2010 #how far back do you want the data to go. 
 
 ```
 
@@ -54,7 +54,7 @@ View(anal.param)
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
-t <- 2 #test BBO
+t <- 1 #test
 
 ```
 
@@ -73,11 +73,11 @@ Now that you have selected the CMMN site, we are going to clean the data. The cl
 
 This main differences from the analytically workflow `03-LoadManipSite` is that we are not using the superfile to filter to species and season of interest. We have also manually assigned the min and max year filters. 
   
-First, assign 'u' your NatureCounts username and run the `prepare` scripts.
+We will import the `Raw_Data.csv` file from the database only if it hasn't been downloaded and saved in the `Data` folder.  
 
 ```{r data manip}
   
-u<-"dethier"  #enter you NatureCounts ID
+ID<-"dethier"  #enter you NatureCounts ID
 source("a_prepare.R")
 
 ```
@@ -111,7 +111,7 @@ source("b_analysis.R")
 ## Classification Plots
 
     
--	Pick the doy at which % rises above 67%.  (Usually this is clear, but the odd day earlier may meet criterion, and vice versa, so some judgement needed.)
+-	Pick the doy at which % rises above 68%.  (Usually this is clear, but the odd day earlier may meet criterion, and vice versa, so some judgement needed.)
 
 -	For each half-year, plot mean daily N vs. doy.  If possible, add a marker to graph showing start and end of coverage period. (Don’t have to be beautiful; just label with spp name and season. (Including the period before and after coverage period is helpful for assessing whether spp is present all summer or in winter.)
 

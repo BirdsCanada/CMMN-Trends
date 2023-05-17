@@ -45,7 +45,7 @@ view(anal.param)
 Select your station. 
 ```{r chooseSite}
 
-t <- 3
+t <- 21
 
 ```
 
@@ -68,7 +68,7 @@ First, assign 'u' your NatureCounts username and run the `prepare` scripts.
 
 ```{r data manip}
   
-u<-"dethier" 
+ID<-"dethier" 
 source("01_prepare.R")
 source("02_outputs.R")
 
@@ -87,7 +87,7 @@ From this point forward, we loop through species and season:
 
 ```{r Change Defaults}
 
-source("04_analysis.R")
+source("03_analysis.R")
 
 ```
 

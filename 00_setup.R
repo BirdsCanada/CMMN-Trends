@@ -85,7 +85,7 @@ bad_dates<-try(read.csv("Data/bad_dates.csv"))
 if(class(bad_dates) == 'try-error'){
 
 bad_dates<-nc_query_table("bmde_filter_bad_dates")
-write.csv(bad_dates, "Data/bad_dates.csv")
+write.csv(bad_dates, "Data/bad_dates.csv", row.names = FALSE)
 
 }#end try catch
 

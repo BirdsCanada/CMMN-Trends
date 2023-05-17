@@ -5,7 +5,6 @@ collection <- as.character(anal.param[t, "collection"])
 station <- as.character(anal.param[t, "station"])
 site <- as.character(anal.param[t, "site"])
 site.specific <- anal.param[t, "site.specific"]
-min.species <- anal.param[t, "min.species"]
 use.trfl <- anal.param[t, "use.trfl"]
 responseM<-anal.param[t , "obs.var.M"]
 responseO<-anal.param[t , "obs.var.O"]
@@ -16,11 +15,10 @@ responseO<-anal.param[t , "obs.var.O"]
 
 #first look in file. If it does not exist, download from database.
 in.data <-try(read.csv(paste(data.dir, site, "_Raw_Data.csv", sep="")))
-event.data<-try(read.csv(paste(out.dir, site, "_Event.csv", sep="")))
 
-if(class(in.data) == 'try-error'| class(event.data) == 'try-error'){
+if(class(in.data) == 'try-error'){
 
-in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = u, info="Trend analysis")
+in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = ID, info="Trend analysis")
 write.csv(in.data, paste(data.dir, site, "_Raw_Data.csv", sep=""), row.names = FALSE)
 
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
@@ -37,6 +35,21 @@ if(station == "LPBO") {
 if((station == "VLBO")) {
   in.data <- in.data %>%
     mutate(SurveyAreaIdentifier = "VLBO") %>%
+    droplevels()
+}
+
+
+# McGill is in the database as both MGBO and MBO
+if((station == "MGBO")) {
+  in.data <- in.data %>%
+    mutate(SurveyAreaIdentifier = "MGBO") %>%
+    droplevels()
+}
+
+#  if RPBO only want site RPBO (not PEBA or RBPO2)
+if((station == "RPBO")) {
+  in.data <- in.data %>%
+    filter(SurveyAreaIdentifier == "RPBO") %>%
     droplevels()
 }
 
@@ -69,39 +82,37 @@ in.data <- in.data %>%
 # get the minimum number of years a species must be detected to be included. Could be MUCH more conservative... currently using 1/2 of years surveyed, but those species might also get kicked out by abundance filters below.
 min.yrs.detect <- trunc(length(unique(in.data$YearCollected))/2) 
 
-# total number of years each doy surveyed at each site (include 0-obs counts)
-# this will be used later in species-specific loop to calculate proportion of years observed
+#total number of years each doy surveyed at each site (include 0-obs counts)
+df.totYears<-NULL
 df.totYears <- in.data %>%
   select(SurveyAreaIdentifier, YearCollected, doy) %>%
   distinct() %>%
   group_by(SurveyAreaIdentifier, doy) %>%
   summarize(totYears = n()) %>%
-  as.data.frame()
+  as.data.frame()%>% 
+  mutate(prop_year= totYears/((max.yr.filt-min.yr.filt)+1)) %>% 
+  mutate(season = if_else(doy < 180, "Spring", "Fall"))
 
-df.sampleDates <- in.data %>%
-  select(SurveyAreaIdentifier, season, YearCollected, doy, ObservationCount) %>%
-  group_by(SurveyAreaIdentifier, season, YearCollected, doy) %>%
-  summarize(nspecies = n()) %>%
-  filter(nspecies >= min.species) %>% # at least 10 individuals observed, usually
-  group_by(SurveyAreaIdentifier, season) %>%
-  summarize(
-    start_doy = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
-                               na.rm = TRUE), digits = 0)[[1]],
-    end_doy = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
-                             na.rm = TRUE), digits = 0)[[2]])
+df.totYears$season_f<-factor(df.totYears$season, levels=c("Spring", "Fall"))
+df.totYears<- df.totYears[order(df.totYears$doy),]
+doy<-df.totYears %>% group_by(season_f) %>% filter(prop_year>0.68) %>% summarise(min=min(doy), max=max(doy))
 
-## filter main data frame by migration windows
-## we do this by merging and dropping observations outside the start and end dates
-in.data <- left_join(in.data, df.sampleDates, by = c("SurveyAreaIdentifier", "season")) %>%
-  filter(doy >= start_doy, doy <= end_doy) %>%
-  select(-start_doy, -end_doy)
+min.spring<-as.numeric(doy[1,2])
+max.spring<-as.numeric(doy[1,3])
+min.fall<-as.numeric(doy[2,2])
+max.fall<-as.numeric(doy[2,3])
+
+## filter main data frame by station windows
+fall<-in.data %>% dplyr::filter(season=="Fall" & doy>=min.fall & doy<=max.fall)
+spring<-in.data %>% dplyr::filter(season=="Spring" & doy>=min.spring & doy<=max.spring)
+in.data<-rbind(fall, spring)
 
 #create events data for zero filling
 event.data <- in.data %>%
   filter(ObservationCount > 0) %>%
   group_by(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season) %>%
   mutate(nspecies = n()) %>%
-  filter(nspecies > min.species) %>% # assuming at least one individual detected each day. This could be modified, for example, to include only dates when at least 10 species were detected.
+  filter(nspecies > 1) %>% # assuming at least one individual detected each day. This could be modified, for example, to include only dates when at least 10 species were detected.
   select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season) %>% 
   distinct() %>%
   ungroup() %>%
@@ -200,7 +211,7 @@ df.superfile <- filter(df.superfile, project_id == project) %>%
          SpeciesCode = species_code,
          season = period) %>%
   select(-SiteCode, -species_code, -period) %>%
-  filter(include == 1, !(analysis_code == "R"), SurveyAreaIdentifier %in% site.list) %>%
+  filter(SurveyAreaIdentifier %in% site.list) %>%
   droplevels()
 
 sp.analyze <- df.superfile %>%
@@ -267,10 +278,10 @@ if(site == "LPBO") {
 } #end if LPBO
 
 #write clean data to file
-write.csv(in.data, paste(out.dir, site, "_Raw.csv", sep=""), row.names = FALSE)
-write.csv(event.data, paste(out.dir, site, "_Event.csv", sep=""), row.names = FALSE)
+write.csv(in.data, paste(data.dir, site, "_Clean_Data.csv", sep=""), row.names = FALSE)
+write.csv(event.data, paste(data.dir, site, "_Event.csv", sep=""), row.names = FALSE)
 
-} #end of try catch, which looks for proceed data on the out.dir first
+} #end of try catch, which looks for proceed data on the data.dir first
 
 ## Generate Species list for analysis
 species.list <- unique(in.data$SpeciesCode)

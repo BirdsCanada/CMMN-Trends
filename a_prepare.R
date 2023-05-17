@@ -1,4 +1,4 @@
-source("00_setup.R")
+#source("00_setup.R")
 
   collection <- as.character(anal.param[t, "collection"])
   station <- as.character(anal.param[t, "station"])
@@ -6,18 +6,22 @@ source("00_setup.R")
   site.specific <- anal.param[t, "site.specific"]
   min.species <- anal.param[t, "min.species"]
   use.trfl <- anal.param[t, "use.trfl"]
+  responseM<-anal.param[t , "obs.var.M"]
+  responseO<-anal.param[t , "obs.var.O"]
     
 ## Import Data
 
 #Import data for the specified station (all species, sites, seasons) using the naturecounts R package. First, it will look to see if you have a copy saved in the data directory. 
 
-in.data <-try(read.csv(paste(out.dir, site, "_Raw_Superfile.csv", sep="")))
-event.data<-try(read.csv(paste(out.dir, site, "_Event_Superfile.csv", sep="")))
+in.data <-try(read.csv(paste(data.dir, site, "_Raw_Data.csv", sep="")))
 
-if(class(in.data) == 'try-error'| class(event.data) == 'try-error'){
+if(class(in.data) == 'try-error'){
 
-in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = u, info="CMMN Superfile Scripts", years=c(min.year, max.year))
+in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = ID, info="CMMN Superfile Scripts", years=c(min.year, max.year))
 
+} #end of try catch, which looks for the raw data in the data.dir first
+
+in.data<- in.data %>% filter(YearCollected >= min.year & YearCollected <= max.year)
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
 
 # we only want sites LPBO1, LPBO2, and LPBO3. 
@@ -32,6 +36,20 @@ if(station == "LPBO") {
 if((station == "VLBO")) {
   in.data <- in.data %>%
     mutate(SurveyAreaIdentifier = "VLBO") %>%
+    droplevels()
+}
+
+# McGill is in the database as both MGBO and MBO
+if((station == "MGBO")) {
+  in.data <- in.data %>%
+    mutate(SurveyAreaIdentifier = "MGBO") %>%
+    droplevels()
+}
+
+#  if RPBO only want site RPBO (not PEBA or RBPO2)
+if((station == "RPBO")) {
+  in.data <- in.data %>%
+    filter(SurveyAreaIdentifier == "RPBO") %>%
     droplevels()
 }
 
@@ -144,7 +162,7 @@ df.totYears <- in.data %>%
   mutate(prop_year= totYears/((max.year-min.year)+1)) %>% 
   mutate(season = if_else(doy < 180, "Spring", "Fall"))
 
-write.csv(df.totYears, paste(out.dir, site, "_YearsSurvey.csv", sep=""), row.names = FALSE)
+write.csv(df.totYears, paste(data.dir, site, "_YearsSurvey.csv", sep=""), row.names = FALSE)
 
 
 ## get total count by species, date, station
@@ -223,10 +241,8 @@ if(site == "LPBO") {
     
 
 #write clean data to file
-write.csv(in.data, paste(out.dir, site, "_Raw_Superfile.csv", sep=""), row.names = FALSE)
-write.csv(event.data, paste(out.dir, site, "_Event_Superfile.csv", sep=""), row.names = FALSE)
-
-  } #end of try catch, which looks for proceed data on the out.dir first
+write.csv(in.data, paste(data.dir, site, "_Raw_Superfile.csv", sep=""), row.names = FALSE)
+write.csv(event.data, paste(data.dir, site, "_Event_Superfile.csv", sep=""), row.names = FALSE)
 
 ## Generate Species list for analysis
 species.list <- unique(in.data$SpeciesCode)

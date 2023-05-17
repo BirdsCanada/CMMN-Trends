@@ -1,3 +1,20 @@
+#sets parameters for your site
+collection <- as.character(anal.param[t, "collection"])
+station <- as.character(anal.param[t, "station"])
+site <- as.character(anal.param[t, "site"])
+site.specific <- anal.param[t, "site.specific"]
+min.species <- anal.param[t, "min.species"]
+use.trfl <- anal.param[t, "use.trfl"]
+responseM<-anal.param[t , "obs.var.M"]
+responseO<-anal.param[t , "obs.var.O"]
+
+#read clean data to file
+read.csv(data.dir, site, "_Clean_Data.csv", sep="")
+read.csv(data.dir, site, "_Event.csv", sep="")
+
+## Generate Species list for analysis
+species.list <- unique(in.data$SpeciesCode)
+
 
 # Species Specific loop
   
