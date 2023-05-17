@@ -1,18 +1,11 @@
----
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-
 #Effort
+
+Version: May 17 2023
+Author: Danielle
 
 These scripts allow you to create the data outputs needed to inspect effort at each station. Since the data processing is different we will create a separate workflow. This file does not need updated every year, but perhaps every 5-10 years to determine if effort is changing systematically. 
 
-**Note that the raw data need to be download previously for this effort script to work. Please run the "03-LoadManipSite.Rmd" to accses and save the raw data in th 'Data' folder. 
+**Note that the raw data need to be download previously for this effort script to work. Please run the "03-LoadManipTrend.Rmd" to access and save the raw data in th 'Data' folder. 
 
 ## Choose your CMMN station 
 
@@ -37,7 +30,7 @@ View(anal.param)
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
-t <- 21 #test
+t <- 3
 
 ```
 

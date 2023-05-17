@@ -1,41 +1,25 @@
----
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
+#Superfile 
 
-#Superfile
+Version: May 17 2023
+Author: Danielle
 
-These scripts allow you to create the data outputs needed for the Superfile creation. Since the data processing is different we will create a septerate workflow. This file does not need updated every year, but perhaps every 5-10 years as migration timings shift due to climate change, foe example. 
-
-
-# Set up Station Data {#Setup3}
-
-```{r tidyr3, echo = FALSE, message = FALSE, warning = FALSE}
-
-library(knitr)
-opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy = FALSE)
-
-```
+These scripts allow you to create the data outputs needed for the Superfile creation which are used for species classification. Since the data processing is different we will create a separate workflow. This file does not need updated every year, but perhaps every 5-10 years as migration timings shift due to climate change, for example. 
 
 ##Setup
 
 The setup files will get you ready for your analysis. It loads you libraries, needed tables, created directories for your outputs, and assigns some parameter values. 
 
-Also assign max year of the analysis. Generally, the data in NatureCounts are 2 years behind. 
+Also assign min and max year of the analysis. Generally, the data in NatureCounts are 2 years behind. 
 
 ```{r setup}
 
 max.year <- 2021 #needs changes with each analysis
 min.year <- 2010 #how far back do you want the data to go. 
+ID<-"dethier"
 
 ```
 
-## Choose your CMMN station {#Setup3.1}
+## Choose your CMMN station 
 
 The number assigned to `t` will correspond to the row in the analysis parameters file ('anal.param') you want to analyze (each site has a separate row).
 
@@ -48,9 +32,6 @@ View(anal.param)
 
 ```
 
-##Select your station, or all stations in the analysis file if you wish to run a loop. 
-
-**We may also choose to create a loop that runs through each stations and processes the data for the superfile analysis**
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
@@ -62,16 +43,7 @@ t <- 1 #test
 
 Now that you have selected the CMMN site, we are going to clean the data. The cleaning scripts do the following: 
 
-  - Load the data from the naturecounts database. You will be prompted for your password.
-  - Assigns seasons (spring and fall)
-  - Calculate season-specific station windows (when a station normally operates).
-  - Make list of sampling dates for zero-filling.
-  - Assign Species Code, and drop species that won't be analyzed (i.e., updates to taxonomies).
-  - Assign UNEM For LPBO data only.
-  - Save the manipulated data in the `Data` folder
-  - Generates a species list for the analysis
-
-This main differences from the analytically workflow `03-LoadManipSite` is that we are not using the superfile to filter to species and season of interest. We have also manually assigned the min and max year filters. 
+This main differences from the analytically workflow `03-LoadManipTrend` is that we are not using the Superfile to filter to species and season of interest. We have also manually assigned the min and max year filters. 
   
 We will import the `Raw_Data.csv` file from the database only if it hasn't been downloaded and saved in the `Data` folder.  
 

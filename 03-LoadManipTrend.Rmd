@@ -1,20 +1,7 @@
----
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-output: html_document
-editor_options: 
-  chunk_output_type: console
----
-# Set up Station Data {#Setup3}
+#Trends
 
-```{r tidyr3, echo = FALSE, message = FALSE, warning = FALSE}
-
-library(knitr)
-opts_chunk$set(tidy.opts=list(width.cutoff=50), tidy = FALSE)
-
-```
+Version: May 17 2023
+Author: Danielle
 
 ##Setup
 
@@ -25,6 +12,7 @@ Also assign max year of the analysis. Generally, the data in NatureCounts are 2 
 ```{r setup}
 
 max.year <- 2021 #needs changes with each analysis
+ID<- "dethier" #chnage this to your user ID. You will be promted for a password. 
 
 ```
 
@@ -38,14 +26,14 @@ View the file to identify the row you want to select
 ## Import site-specific analysis parameters 
 ##This will need checked and updated before each analysis
 anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") 
-view(anal.param)
+View(anal.param)
 
 ```
 
 Select your station. 
 ```{r chooseSite}
 
-t <- 21
+t <- 2
 
 ```
 
