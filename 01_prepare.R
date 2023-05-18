@@ -21,9 +21,11 @@ if(class(in.data) == 'try-error'){
 in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = ID, info="Trend analysis")
 write.csv(in.data, paste(data.dir, site, "_Raw_Data.csv", sep=""), row.names = FALSE)
 
+} #end of try catch, which looks for proceed data on the data.dir first
+
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
 
-# we only want sites LPBO1, LPBO2, and LPBO3. 
+# We only want sites LPBO1, LPBO2, and LPBO3. 
 if(station == "LPBO") {
   in.data <- in.data %>%
     distinct() %>%
@@ -38,7 +40,6 @@ if((station == "VLBO")) {
     droplevels()
 }
 
-
 # McGill is in the database as both MGBO and MBO
 if((station == "MGBO")) {
   in.data <- in.data %>%
@@ -46,7 +47,7 @@ if((station == "MGBO")) {
     droplevels()
 }
 
-#  if RPBO only want site RPBO (not PEBA or RBPO2)
+#If RPBO only want site RPBO (not PEBA or RBPO2)
 if((station == "RPBO")) {
   in.data <- in.data %>%
     filter(SurveyAreaIdentifier == "RPBO") %>%
@@ -82,6 +83,8 @@ in.data <- in.data %>%
 # get the minimum number of years a species must be detected to be included. Could be MUCH more conservative... currently using 1/2 of years surveyed, but those species might also get kicked out by abundance filters below.
 min.yrs.detect <- trunc(length(unique(in.data$YearCollected))/2) 
 
+###HERE###
+
 #total number of years each doy surveyed at each site (include 0-obs counts)
 df.totYears<-NULL
 df.totYears <- in.data %>%
@@ -95,17 +98,21 @@ df.totYears <- in.data %>%
 
 df.totYears$season_f<-factor(df.totYears$season, levels=c("Spring", "Fall"))
 df.totYears<- df.totYears[order(df.totYears$doy),]
+
+#determine station regular operating window
 doy<-df.totYears %>% group_by(season_f) %>% filter(prop_year>0.68) %>% summarise(min=min(doy), max=max(doy))
 
-min.spring<-as.numeric(doy[1,2])
-max.spring<-as.numeric(doy[1,3])
-min.fall<-as.numeric(doy[2,2])
-max.fall<-as.numeric(doy[2,3])
+min.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(min))
+max.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(max))
+min.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(min))
+max.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(max))
 
-## filter main data frame by station windows
-fall<-in.data %>% dplyr::filter(season=="Fall" & doy>=min.fall & doy<=max.fall)
-spring<-in.data %>% dplyr::filter(season=="Spring" & doy>=min.spring & doy<=max.spring)
-in.data<-rbind(fall, spring)
+#filter in.data by operating window
+fall<- try(in.data %>% filter(season=="Fall", doy>=min.fall, doy<=max.fall), silent=TRUE)
+spring<-try(in.data %>% filter(season=="Spring", doy>=min.spring, doy<=max.spring), silent = TRUE)
+
+#combine fall and spring data
+in.data<-rbind(spring, fall)
 
 #create events data for zero filling
 event.data <- in.data %>%
@@ -136,21 +143,10 @@ event.data <- in.data %>%
 #At the end of this section, we add the counts for a given species/dates, in case 
 #e.g., BHVI, SOVI were recorded on the same date, there will now be two records for SOVI on that date. We want the total count across these records.
 
-## print list of SpeciesCodes with NA species_ids. This is more for interest sake. These are likely species codes that were entered incorrectly. Unless there is a large amount of them, ignore.
-#print(paste("Species Codes with no species_id: "))
-#filter(in.data, is.na(species_id)) %>% 
-#  select(SpeciesCode) %>%
-#  group_by(SpeciesCode) %>%
-#  summarize(n = n()) %>% 
-#  arrange(n) %>% 
-#  select(SpeciesCode, n) %>% 
-#  as.data.frame()
-
-## re-assign species codes
+##Re-assign species codes
 
 in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "WISN", "NOFL", "WPWI", "PAWA","DEJU","YRWA")) %>%
-  group_by(SpeciesCode) %>%
-  tally()
+  group_by(SpeciesCode) 
 
 in.data <- in.data %>%
   mutate(SpeciesCode = as.character(SpeciesCode),
@@ -171,19 +167,17 @@ in.data <- in.data %>%
          SpeciesCode = replace(SpeciesCode, (SpeciesCode == "SCJU"|SpeciesCode == "GHJU"|SpeciesCode == "ORJU"|SpeciesCode == "UDEJ"|SpeciesCode == "WWJU"|SpeciesCode == "YDEJ"|SpeciesCode == "PSJU"), "DEJU"))
 
 in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "WISN", "NOFL", "WPWI", "PAWA","DEJU","YRWA")) %>%
-  group_by(SpeciesCode) %>%
-  tally()
+  group_by(SpeciesCode)
 
 ## re-assign speciesID based on the new species codes
 ## This ensures species codes/ids are consistent across stations and
 ## years/days within a station
 
-sp.list1 <- select(in.data, SpeciesCode) %>%
-  distinct()
+sp.list1 <- select(in.data, SpeciesCode) %>% distinct()
 
-sp.code<-search_species_code()
+sp.code<-search_species_code(authority = "CMMN", results="all")
 
-sp.list <- left_join(sp.list1, sp.code, by = c("SpeciesCode" = "BSCDATA")) %>%
+sp.list <- left_join(sp.list1, sp.code, by = c("SpeciesCode" = "CMMN")) %>%
   filter(!is.na(SpeciesCode))
 
 in.data <- left_join(select(in.data, -species_id), sp.list, by = "SpeciesCode") %>%
@@ -280,10 +274,5 @@ if(site == "LPBO") {
 #write clean data to file
 write.csv(in.data, paste(data.dir, site, "_Clean_Data.csv", sep=""), row.names = FALSE)
 write.csv(event.data, paste(data.dir, site, "_Event.csv", sep=""), row.names = FALSE)
-
-} #end of try catch, which looks for proceed data on the data.dir first
-
-## Generate Species list for analysis
-species.list <- unique(in.data$SpeciesCode)
 
 

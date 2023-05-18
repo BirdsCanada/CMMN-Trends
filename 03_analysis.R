@@ -1,3 +1,5 @@
+source("00_setup.R")
+
 #sets parameters for your site
 collection <- as.character(anal.param[t, "collection"])
 station <- as.character(anal.param[t, "station"])
@@ -9,12 +11,11 @@ responseM<-anal.param[t , "obs.var.M"]
 responseO<-anal.param[t , "obs.var.O"]
 
 #read clean data to file
-read.csv(data.dir, site, "_Clean_Data.csv", sep="")
-read.csv(data.dir, site, "_Event.csv", sep="")
+in.data<-read.csv(paste(data.dir, site, "_Clean_Data.csv", sep=""))
+event.data<-read.csv(paste(data.dir, site, "_Event.csv", sep=""))
 
 ## Generate Species list for analysis
 species.list <- unique(in.data$SpeciesCode)
-
 
 # Species Specific loop
   
@@ -44,7 +45,7 @@ for(k in 1:length(species.list)) {
   ## FILTER SPECIES-SPECIFIC MIGRATION WINDOWS. 
   ## Filter by seasonal migration windows BEFORE doing additional filters (min number years, mean abundance, number of detection days), as those should be applied to the data within a window
   
-  ## Migration windows are included in the superfile.
+  ## Migration windows are included in the Superfile.
   
   if(site != "LPBO") {
     df.migWindows <- df.superfile %>%
@@ -97,7 +98,6 @@ for(k in 1:length(species.list)) {
     df.tmp <- df.tmp %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, anal.param[t , "obs.var.M"], start_date, end_date, analysis_code) 
     # rename count variable, so consistent for following steps
     names(df.tmp)[10] <- c("ObservationCount") 
-    
     
   df.nyears <- df.tmp %>%
     filter(ObservationCount > 0) %>%
@@ -215,11 +215,7 @@ for(k in 1:length(species.list)) {
     df.tmp <- df.tmp %>%
       mutate(SpeciesCode = as.factor(SpeciesCode)) %>%
       droplevels()
-    
-    # get list of sites
-    
-    site.list <- as.character(unique(df.tmp$SurveyAreaIdentifier))
-    
+
 #   ####################################################################
     ####################################################################
    
@@ -247,53 +243,54 @@ for(k in 1:length(species.list)) {
         # MODEL FORMULAS
         
         if(length(unique(df.tmp$SurveyAreaIdentifier)) == 1) {                                         
-          trend.formula <- ObservationCount ~ cyear + doy1 + doy2 + 
-            f(yearfac, model = "ar1") + f(doyfac, model = "ar1") 
+        #  trend.formula <- ObservationCount ~ cyear + doy1 + doy2 + 
+        #    f(yearfac, model = "ar1") + f(doyfac, model = "ar1") 
           
-          index.formula <- ObservationCount ~ fyear - 1 + doy1 + doy2 + 
+          index.formula <- ObservationCount ~ - 1 + fyear + doy1 + doy2 + 
             f(yearfac, model = "ar1") + f(doyfac, model = "ar1")
         }
         
         if(length(unique(df.tmp$SurveyAreaIdentifier)) > 1) {                                         
-          trend.formula <- ObservationCount ~ cyear + doy1 + doy2 + 
-            SurveyAreaIdentifier + doy1*SurveyAreaIdentifier + doy2*SurveyAreaIdentifier +
-            f(yearfac, model = "ar1") + f(doyfac, model = "ar1")
+        #  trend.formula <- ObservationCount ~ cyear + doy1 + doy2 + 
+        #    SurveyAreaIdentifier + doy1*SurveyAreaIdentifier + doy2*SurveyAreaIdentifier +
+        #    f(yearfac, model = "ar1") + f(doyfac, model = "ar1")
           
-          index.formula <- ObservationCount ~ fyear - 1 + doy1 + doy2 + SurveyAreaIdentifier +
+          index.formula <- (ObservationCount ~ - 1 + fyear + doy1 + doy2 + SurveyAreaIdentifier +
             doy1*SurveyAreaIdentifier + doy2*SurveyAreaIdentifier +
-            f(yearfac, model = "ar1") + f(doyfac, model = "ar1")
+            f(yearfac, model = "ar1") + f(doyfac, model = "ar1"))
         }
         
         # AUTO-GENERATE TIME PERIODS TO ANALYZE TRENDS
         
-        time.period = NA
-        Y1.trend = NA
-        Y2.trend = NA
+        #Generation length
         
-        # if the time periods are not provided, generate all-years and 10 year periods.
+        time.period = NA
+        
+        #generate all-years, 10 years and/or 3 generation length.
         
         if (is.na(time.period)) {
           endyr <- max(df.tmp$YearCollected)
           startyr <- min(df.tmp$YearCollected)
           
-          Y1.trend <- startyr
-          Y2.trend <- endyr
-          time.period <- "all years"
+        gen.length<-as.numeric(gen %>% filter(speciesID==sp.id) %>% select(generation))
+        
+        if(gen.length<10){
+          gen.length<-10
+        }
+        
+       tenyr<-endyr-10
+       threegen<-endyr-gen.length
+        
+          time.period = c("all years", "10-years", "3-generation")
+          Y1.trend <- c(startyr, tenyr, threegen)
+          Y2.trend <- c(endyr, endyr, endyr)
           
-          g <- 1
-          while (endyr - (g * yr.incr) > startyr) {
-            Y1.trend <- c(Y1.trend, endyr - (g * yr.incr))
-            Y2.trend <- c(Y2.trend, endyr)
-            time.period <- c(time.period, paste((g * yr.incr), "-years", sep=""))
-            g <- g + 1
-          } # end of while loop
-          
-          if((site == "LPBO" & startyr <= 1968)) {
+      #   if((site == "LPBO" & startyr <= 1968)) {
             
-            time.period = c(time.period, "BBS")
-            Y1.trend <- c(Y1.trend, 1968)
-            Y2.trend <- c(Y2.trend, endyr)
-          }
+        #    time.period = c(time.period, "BBS")
+        #    Y1.trend <- c(Y1.trend, 1968)
+        #    Y2.trend <- c(Y2.trend, endyr)
+      #    }
           
         } # end of time period loop
         
@@ -311,21 +308,21 @@ for(k in 1:length(species.list)) {
           ##RUN TREND ANALYSIS
           #Run both a nbinomial and poisson model. Select the model with the lowest AIC or WIC.                
             
-            trend.nb <-trend.pois <- NULL
+            index.nb <-index.pois <- NULL
       
-            trend.nb <- try(inla(trend.formula,family = "nbinomial", data = df.tmp,
+            index.nb <- try(inla(index.formula,family = "nbinomial", data = df.tmp,
                               control.predictor = list(compute = TRUE), control.compute = list(dic=TRUE)), silent = T)
             
-            trend.pois <- try(inla(trend.formula,family = "poisson", data = df.tmp,
+            trend.pois <- try(inla(index.formula,family = "poisson", data = df.tmp,
                               control.predictor = list(compute = TRUE), control.compute = list(dic=TRUE)), silent = T)
             
-            top.model <- try(if(trend.nb[["dic"]][["dic"]] < trend.pois[["dic"]][["dic"]]) {trend.nb
+            top.model <- try(if(index.nb[["dic"]][["dic"]] < index.pois[["dic"]][["dic"]]) {trend.nb
             } else {
-              trend.pois
+              index.pois
             }
             , silent = TRUE)
             
-           family <- try(if(trend.nb[["dic"]][["dic"]] < trend.pois[["dic"]][["dic"]]) {family="nbinomial"
+           family <- try(if(index.nb[["dic"]][["dic"]] < index.pois[["dic"]][["dic"]]) {family="nbinomial"
             } else {
               family="poisson"
             }

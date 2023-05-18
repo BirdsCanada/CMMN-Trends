@@ -70,19 +70,6 @@ in.data <- in.data %>%
 # get the minimum number of years a species must be detected to be included. Could be MUCH more conservative... currently using 1/2 of years surveyed, but those species might also get kicked out by abundance filters below.
 min.yrs.detect <- trunc(length(unique(in.data$YearCollected))/2) 
 
-## the following gets the start and end dates for each station and season
-## uses the observation variable that is being analyzed,
-#df.sampleDates <- in.data %>%
-#  select(SurveyAreaIdentifier, season, YearCollected, doy, ObservationCount) %>%
-#  group_by(SurveyAreaIdentifier, season, YearCollected, doy) %>%
-#  summarize(nspecies = n()) %>%
-#  filter(nspecies >= min.species) %>% # at least 10 individuals observed, usually
-#  group_by(SurveyAreaIdentifier, season) %>%
-#  summarize(
-#    start_95 = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
-#                               na.rm = TRUE), digits = 0)[[1]],
-#    end_95 = round(quantile(doy, probs = c(station.pctile1, station.pctile2)/100, 
-#                             na.rm = TRUE), digits = 0)[[2]])
 
 #create events data for zero filling
 event.data <- in.data %>%
@@ -95,32 +82,6 @@ event.data <- in.data %>%
   as.data.frame()
 
 ## Assign Species Code, and drop species that won't be analyzed
-
-#Because speciesIDs often change with updates to taxonomies, we want to use the species codes assigned during data entry, and update the speciesIDs in the data accordingly. 
-#There are also species that need to be combined for analysis. The following species have subspecies, etc, that should be analyzed as one species. Prior to analysis, we need to re-assign species codes so that they match the primary code (EATO, GCTH, etc).  Denis may have fixed some in database (e.g. WISN), but won’t hurt to keep in script until we’re sure:
-  
-#EATO: 18560, 18570 (RSTO, URST, EATO)
-#GCTH: 15551, 15560, 15570 (GBTH, GCBT, GCTH, BITH)
-#NSTS: 18940, 18961 (NESP, STSP, NSTS)
-#SOVI: 13390, 13410, 13420 (SOVI, CAVI, BHVI)
-#TRFL: 12150, 12160, 12170 (TRFL, ALFL, WIFL)
-
-#WEFL: 12231, 12240 (WEFL, PSFL)
-#WISN: 4940, 4950 (WISN, COSN)
-#WPWI: 7870, 7871 (WPWI, EWPW, EWWP)
-
-#At the end of this section, we add the counts for a given species/dates, in case 
-#e.g., BHVI, SOVI were recorded on the same date, there will now be two records for SOVI on that date. We want the total count across these records.
-
-## print list of SpeciesCodes with NA species_ids. This is more for interest sake. These are likely species codes that were entered incorrectly. Unless there is a large amount of them, ignore.
-#print(paste("Species Codes with no species_id: "))
-#filter(in.data, is.na(species_id)) %>% 
-#  select(SpeciesCode) %>%
-#  group_by(SpeciesCode) %>%
-#  summarize(n = n()) %>% 
-#  arrange(n) %>% 
-#  select(SpeciesCode, n) %>% 
-#  as.data.frame()
 
 ## re-assign species codes
 
