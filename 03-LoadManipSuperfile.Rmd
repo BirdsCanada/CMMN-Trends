@@ -13,8 +13,8 @@ Also assign min and max year of the analysis. Generally, the data in NatureCount
 
 ```{r setup}
 
-max.year <- 2021 #needs changes with each analysis
-min.year <- 2010 #how far back do you want the data to go. 
+max.year <- 2019 #needs changes with each analysis
+min.year.test <- 2000 #how far back do you want the data to go. The code will check that there are data this far back and correct if there is not. 
 ID<-"dethier"
 
 ```
@@ -35,7 +35,7 @@ View(anal.param)
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
-t <- 1 #test
+t <- 6 #test
 
 ```
 

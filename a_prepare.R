@@ -4,7 +4,6 @@
   station <- as.character(anal.param[t, "station"])
   site <- as.character(anal.param[t, "site"])
   site.specific <- anal.param[t, "site.specific"]
-  min.species <- anal.param[t, "min.species"]
   use.trfl <- anal.param[t, "use.trfl"]
   responseM<-anal.param[t , "obs.var.M"]
   responseO<-anal.param[t , "obs.var.O"]
@@ -13,13 +12,19 @@
 
 #Import data for the specified station (all species, sites, seasons) using the naturecounts R package. First, it will look to see if you have a copy saved in the data directory. 
 
-in.data <-try(read.csv(paste(data.dir, site, "_Raw_Data.csv", sep="")))
+in.data <-try(read.csv(paste("./Data/2021/", site, "_Raw_Data.csv", sep="")))
 
 if(class(in.data) == 'try-error'){
 
 in.data <- nc_data_dl(collections = collection, fields_set = "extended", username = ID, info="CMMN Superfile Scripts", years=c(min.year, max.year))
 
 } #end of try catch, which looks for the raw data in the data.dir first
+
+#check and assign min year
+
+min.yr<- min(in.data$YearCollected)
+
+min.year <- ifelse(min.yr>min.year.test, min.yr, min.year.test)
 
 in.data<- in.data %>% filter(YearCollected >= min.year & YearCollected <= max.year)
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)

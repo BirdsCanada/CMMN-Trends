@@ -12,7 +12,7 @@ Also assign max year of the analysis. Generally, the data in NatureCounts are 2 
 ```{r setup}
 
 max.year <- 2021 #needs changes with each analysis
-ID<- "dethier" #chnage this to your user ID. You will be promted for a password. 
+ID<- "dethier" #change this to your user ID. You will be prompted for a password. 
 
 ```
 
@@ -41,7 +41,7 @@ t <- 2
 
 Now that you have selected the CMMN site, we are going to clean the data. The cleaning scripts do the following: 
 
-  - Load the data from the naturecounts database. You will be prompted for your password.
+  - Load the data from the naturecounts database. You will be prompted for your password. The code will first look to see if the data have been downloaded and stored. 
   - Subset data to min and max year based on analysis parameters file.
   - Calculate season-specific station windows (when a station normally operates).
   - Make list of sampling dates for zero-filling (based on *DET*)
@@ -50,7 +50,7 @@ Now that you have selected the CMMN site, we are going to clean the data. The cl
   - Assign UNEM For LPBO data only.
   - Save the manipulated data in the `Data` folder
   - Generates a species list for the analysis
-  - create output tables for the analysis
+  - Create output tables for the analysis
   
 First, assign 'u' your NatureCounts username and run the `prepare` scripts.
 
