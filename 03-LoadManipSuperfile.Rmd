@@ -35,7 +35,7 @@ View(anal.param)
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
-t <- 6 #test
+t <- 7 #test
 
 ```
 
@@ -48,8 +48,7 @@ This main differences from the analytically workflow `03-LoadManipTrend` is that
 We will import the `Raw_Data.csv` file from the database only if it hasn't been downloaded and saved in the `Data` folder.  
 
 ```{r data manip}
-  
-ID<-"dethier"  #enter you NatureCounts ID
+
 source("a_prepare.R")
 
 ```
@@ -60,7 +59,7 @@ We are now ready to create our data summaries.
 
   - Loop through each species in the `species.list` which was create in the last step.
   - Zero-fill the data frame using the `event.data` 
-  - Drop any species from further analysis that falls below analysis thresholds for either criterion.
+  - Drop any species from further analysis that falls below analysis thresholds for either criterion. The data are first filtered for the station widnow to eliminate high counts outside the regular count period. 
       Seasons where mean number of individuals/year is < 10 *based on DET*
       Seasons where mean number of observation days/year is < 5 *based on DET*
   - Calculate the mean count per doy for each response variable in each season, where
@@ -95,3 +94,31 @@ source("b_analysis.R")
 source("c_plot.R")
 
 ```
+
+If you feeling ready (you feel the code is doing what you want it to do), you can use a loop and process all sites at once. 
+
+```{r loop}
+
+max.year <- 2019 
+min.year.test <- 2000 
+ID<-"dethier"
+anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") 
+
+#remove sites that don't have data ready yet. 
+anal.param<-anal.param %>% filter(site != "IBS") %>% filter(site != "OOT")
+
+#assign length to the number of list in the list
+
+for (j in 1:18) {
+    
+    t <- j
+    
+    source("a_prepare.R")
+    source("b_analysis.R")
+    source("c_plot.R")
+
+}
+
+
+```
+

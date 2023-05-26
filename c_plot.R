@@ -1,4 +1,10 @@
 
+mig.data<-read.csv(paste(data.dir, site, "_SuperData.csv", sep = ""))
+
+mig.data<-mig.data %>% filter(!is.na(SurveyAreaIdentifier))
+site.list<-unique(mig.data$SurveyAreaIdentifier)
+
+
 if(station == "LPBO") {
   for(m in 1:length(site.list)) {
     
@@ -36,14 +42,23 @@ if(station == "LPBO") {
       
       #filter out DOY <90
       mean.plot<- mean.plot %>% filter(doy>90)
-      
       data_startline<-doy %>% select(season_f, min)
       data_endline<- doy %>% select(season_f, max)
+      
+      #min.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(min))
+      #max.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(max))
+      #min.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(min))
+      #max.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(max))
+      
+      #filter data for smooth plotting within the station coverage window
+      #filter.plot<-mean.plot %>% filter(doy>=data_startline, doy<=data_endline)
       
       out.plot[[n]]<-ggplot(data = mean.plot, aes(x=doy, y=value, colour=variable))+
         geom_point()+
         facet_wrap(~season_f, scales = "free", ncol=1 )+
         geom_smooth(se=FALSE)+
+        #geom_smooth(data=fall.plot, aes(x=doy, y=value, colour=variable), se=FALSE)+
+        #geom_smooth(data=spring.plot, aes(x=doy, y=value, colour=variable), se=FALSE)+
         geom_vline(data = data_startline, aes(xintercept = min))+
         geom_vline(data = data_endline, aes(xintercept = max))+
         # theme_classic()+
@@ -101,25 +116,41 @@ for(n in 1:length(species.list2)) {
  mean.plot$season_f<-factor(mean.plot$season, levels=c("Spring", "Fall"))
  
  #filter out DOY <90
- 
  mean.plot<- mean.plot %>% filter(doy>90)
 
  data_startline<-doy %>% select(season_f, min)
  data_endline<- doy %>% select(season_f, max)
+ 
+ #min.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(min))
+ #max.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(max))
+ #min.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(min))
+ #max.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(max))
 
-out.plot[[n]]<-ggplot(data = mean.plot, aes(x=doy, y=value, colour=variable))+
-  geom_point()+
-  facet_wrap(~season_f, scales = "free", ncol=1 )+
-  geom_smooth(se=FALSE)+
-  geom_vline(data = data_startline, aes(xintercept = min))+
-  geom_vline(data = data_endline, aes(xintercept = max))+
- # theme_classic()+
-  xlab("Day of Year")+
-  ylab("Mean Count")+
-  ggtitle(species.list2[n])+
-  scale_x_continuous(breaks=scales::breaks_width(width=10))
-  
+ #fall<- try(plot.data %>% filter(season=="Fall", doy>=min.fall, doy<=max.fall), silent=TRUE)
+ #spring<-try(plot.data %>% filter(season=="Spring", doy>=min.spring, doy<=max.spring), silent = TRUE)
+ 
+ #fall.plot<-try(fall %>% melt(id.vars=c("SurveyAreaIdentifier", "species", "doy", "season")), silent=TRUE)   
+ #try(fall.plot$variable <- factor(mean.plot$variable , levels=c("mean_Obs", "mean_Obs3", "mean_Obs4", "mean_Obs7"), labels=c("DET", "Census", "Banding", "B+C")), silent=TRUE)
+ 
+ #spring.plot<-try(spring %>% melt(id.vars=c("SurveyAreaIdentifier", "species", "doy", "season")), silent=TRUE)   
+ #try(spring.plot$variable <- factor(mean.plot$variable , levels=c("mean_Obs", "mean_Obs3", "mean_Obs4", "mean_Obs7"), labels=c("DET", "Census", "Banding", "B+C")), silent=TRUE)
 
+#filter.plot<-rbind(spring, fall)
+ 
+ out.plot[[n]]<-ggplot(data = mean.plot, aes(x=doy, y=value, colour=variable))+
+   geom_point()+
+   facet_wrap(~season_f, scales = "free", ncol=1 )+
+   geom_smooth(se=FALSE)+
+   #geom_smooth(data=fall.plot, aes(x=doy, y=value, colour=variable), se=FALSE)+
+   #geom_smooth(data=spring.plot, aes(x=doy, y=value, colour=variable), se=FALSE)+
+   geom_vline(data = data_startline, aes(xintercept = min))+
+   geom_vline(data = data_endline, aes(xintercept = max))+
+   # theme_classic()+
+   xlab("Day of Year")+
+   ylab("Mean Count")+
+   ggtitle(species.list2[n])+
+   scale_x_continuous(breaks=scales::breaks_width(width=10))
+ 
 } #end species loop
 
 

@@ -150,6 +150,8 @@ in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "W
 
 in.data <- in.data %>%
   mutate(SpeciesCode = as.character(SpeciesCode),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "OLDS"), "LTDU"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "HEGU"), "HERG"),
          SpeciesCode = replace(SpeciesCode, (SpeciesCode == "BHVI"|SpeciesCode == "CAVI"), "SOVI"),
          SpeciesCode = replace(SpeciesCode, (SpeciesCode == "YEWA"), "YWAR"),
          SpeciesCode = replace(SpeciesCode, (SpeciesCode == "RSTO"|SpeciesCode == "URST"), "EATO"),

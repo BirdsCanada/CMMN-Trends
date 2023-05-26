@@ -1,6 +1,5 @@
-# If the data exists, load, otherwise process in.data
 
-data<-NULL
+in.data<-NULL
 
 in.data <-read.csv(paste(data.dir, site, "_Raw_Superfile.csv", sep="")) 
 event.data<-read.csv(paste(data.dir, site, "_Event_Superfile.csv", sep="")) 
@@ -9,6 +8,21 @@ event.data$YearCollected<-as.integer(event.data$YearCollected)
 event.data$MonthCollected<-as.integer(event.data$MonthCollected)
 event.data$DayCollected<-as.integer(event.data$DayCollected)
 event.data$date<-as.character(event.data$date)
+
+#filter by station coverage window
+year.data<-read.csv(paste(data.dir, site, "_YearsSurvey.csv", sep=""))
+year.data$season_f<-factor(year.data$season, levels=c("Spring", "Fall"))
+year.data<- year.data[order(year.data$doy),]
+doy<-year.data %>% group_by(season_f) %>% filter(prop_year>0.68) %>% summarise(min=min(doy), max=max(doy))
+min.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(min))
+max.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(max))
+min.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(min))
+max.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(max))
+
+fall<- try(in.data %>% filter(season=="Fall", doy>=min.fall, doy<=max.fall), silent=TRUE)
+spring<-try(in.data %>% filter(season=="Spring", doy>=min.spring, doy<=max.spring), silent = TRUE)
+
+open.data<-rbind(spring, fall)
 
 #Create output table for site specific results
 sp.data <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 8, byrow = FALSE,
@@ -24,6 +38,10 @@ for(k in 1:length(species.list)) {
   sp.data<-NULL
   sp.data <- in.data %>% filter(SpeciesCode == species.list[k]) %>% distinct(SurveyAreaIdentifier,  YearCollected, MonthCollected, DayCollected, .keep_all = TRUE)
   species <- species.list[k]
+  
+  st.data<-NULL
+  st.data <- open.data %>% filter(SpeciesCode == species.list[k]) %>% distinct(SurveyAreaIdentifier,  YearCollected, MonthCollected, DayCollected, .keep_all = TRUE)
+
   
 #zero-fill by merging event and real data.  
   
@@ -41,7 +59,7 @@ for(k in 1:length(species.list)) {
 # 1. Drop seasons where mean number of individuals/year is < 10
   
   df.mean <- NULL
-  df.mean <- sp.data %>%
+  df.mean <- st.data %>%
     group_by(SurveyAreaIdentifier, season, YearCollected) %>%
     summarize(count = sum(ObservationCount)) %>% 
     group_by(SurveyAreaIdentifier, season) %>% #now get mean across years
@@ -56,7 +74,7 @@ for(k in 1:length(species.list)) {
 # 2. Drop seasons where mean number of observation days/year is < 5
   
   df.obs <- NULL
-  df.obs <- sp.data %>%
+  df.obs <- st.data %>%
     filter(ObservationCount > 0) %>%
     group_by(SurveyAreaIdentifier, season, YearCollected) %>%
     summarize(nobs = n()) %>%
