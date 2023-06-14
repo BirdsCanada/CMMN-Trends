@@ -1,4 +1,4 @@
-#Superfile 
+19#Superfile 
 
 Version: May 17 2023
 Author: Danielle
@@ -109,7 +109,7 @@ anal.param<-anal.param %>% filter(site != "IBS") %>% filter(site != "OOT")
 
 #assign length to the number of list in the list
 
-for (j in 1:18) {
+for (j in 1:19) {
     
     t <- j
     

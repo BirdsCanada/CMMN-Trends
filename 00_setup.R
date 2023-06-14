@@ -1,7 +1,7 @@
 #Setup scripts for CMMN Analysis
 #Replaced the 03-SetWorkingEnvironment.Rmd
 #May not need sql outputs. If that is the case, then can be delected. 
-
+options(dplyr.summarise.inform = FALSE)
 
 #Load Packages
 
@@ -18,6 +18,7 @@ require(tidyverse)
 require(lubridate)
 require(reshape)
 require(ggpubr)
+library(mgcv)
 
 # Create folders as necessary
 if(!dir.exists("Data")) dir.create("Data")
@@ -126,5 +127,23 @@ gen<-nc_query_table(username=ID, "vwResultsSocbSpecies")
 gen<-gen %>% select(speciesID, generation)
 write.csv(gen, "Data/generation.csv")
 
+##LOESS function
 
+loess_func <- function(i,y){
+  tmp <- loess(i~y, 
+               span=0.55, na.action = na.exclude)
+  preds <- predict(tmp)
+  return(preds)
+}
+
+##BBS slope trend function    
+bsl = function(i){
+  n = length(wy)
+  sy = sum(i)
+  sx = sum(wy)
+  ssx = sum(wy^2)
+  sxy = sum(i*wy)
+  b = (n*sxy - sx*sy)/(n*ssx - sx^2)
+  return(b)
+}
 

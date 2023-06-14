@@ -83,8 +83,6 @@ in.data <- in.data %>%
 # get the minimum number of years a species must be detected to be included. Could be MUCH more conservative... currently using 1/2 of years surveyed, but those species might also get kicked out by abundance filters below.
 min.yrs.detect <- trunc(length(unique(in.data$YearCollected))/2) 
 
-###HERE###
-
 #total number of years each doy surveyed at each site (include 0-obs counts)
 df.totYears<-NULL
 df.totYears <- in.data %>%
@@ -202,8 +200,7 @@ as.data.frame()
 ## create new response variable for census + band
 in.data$ObservationCount7=in.data$ObservationCount3+in.data$ObservationCount4
 
-df.superfile <- filter(df.superfile, project_id == project) %>%
-  mutate(SurveyAreaIdentifier = SiteCode,
+df.superfile <-df.superfile %>%  mutate(SurveyAreaIdentifier = SiteCode,
          SpeciesCode = species_code,
          season = period) %>%
   select(-SiteCode, -species_code, -period) %>%
@@ -272,6 +269,9 @@ if(site == "LPBO") {
     filter(SpeciesCode != "UNEM")
   
 } #end if LPBO
+
+#Remove NA years
+in.data<-in.data %>% drop_na(YearCollected)
 
 #write clean data to file
 write.csv(in.data, paste(data.dir, site, "_Clean_Data.csv", sep=""), row.names = FALSE)

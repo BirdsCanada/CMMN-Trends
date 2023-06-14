@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 #Trends
 
 Version: May 17 2023
@@ -33,7 +38,7 @@ View(anal.param)
 Select your station. 
 ```{r chooseSite}
 
-t <- 2
+t <- 9
 
 ```
 
@@ -68,7 +73,7 @@ From this point forward, we loop through species and season:
 
 1) Zero-fill the data using the `events` matrix 
 
-2) Apply species-specific filters to date (seasonal migration windows), abundance (mean 10 individuals/year), occurrence (mean 5 observation days/year), and drop years with no observations.
+2) Apply species-specific filters to abundance (mean 10 individuals/year), occurrence (mean 5 observation days/year), and drop years with no observations.
 
 3) Run the trend analysis by looping through year periods (10-year periods)
 
@@ -79,17 +84,11 @@ source("03_analysis.R")
 
 ```
 
-NOTE: this step might not be necessary if you can input the obs variable right into the analysis. Leaving for now.
+## Plot Output
 
-```{r pickObservationCountVar}
+```{r Change Defaults}
 
-
-yr.data <- in.data %>%
-  filter(ObservationCount > 0) %>%
-  group_by(SpeciesCode, YearCollected, season) %>%
-  summarize(totCount = sum(ObservationCount),
-            nobs = n())
-
-
+source("04_plot.R")
 
 ```
+

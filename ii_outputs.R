@@ -7,7 +7,7 @@
 
 indices.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 13, byrow = FALSE,
                                     dimnames = NULL))
-names(indices.csv) <- c("results_code", "area_code", "year", "season", "period", "species_code", "species_id", "index", "stderr", "stdev", "upper_ci", "lower_ci", "LOESS_index")  
+names(indices.csv) <- c("results_code", "area_code", "year", "season", "period", "species_code", "species_id", "index", "stdev", "upper_ci", "lower_ci", "LOESS_index", "meanObs")  
 
 write.table(indices.csv, file = paste(out.dir, 
                                       site, "_AnnualIndices",".csv", sep = ""), 
@@ -15,9 +15,9 @@ write.table(indices.csv, file = paste(out.dir,
 
 
 ## Create text file for trends (appending year periods into one file)
-trends.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 42, 
+trends.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 18, 
                                    byrow = FALSE, dimnames = NULL))
-names(trends.csv) <- c("results_code", "version", "area_code", "species_code", "species_id", "season", "period", "years", "year_start", "year_end", "trnd", "index_type", "upper_ci", "lower_ci", "stderr", "model_type", "model_fit", "percent_change", "percent_change_low", "percent_change_high", "prob_decrease_0", "prob_decrease_25", "prob_decrease_30", "prob_decrease_50", "prob_increase_0", "prob_increase_33", "prob_increase_100", "reliability", "precision_num", "precision_cat", "coverage_num", "coverage_cat", "goal", "goal_lower", "sample_size", "sample_total", "subtitle", "prob_LD", "prob_MD", "prob_LC", "prob_MI", "prob_LI")
+names(trends.csv) <- c("results_code", "version", "area_code", "species_code", "species_id", "season", "period", "years", "year_start", "year_end", "trnd", "lower_ci", "upper_ci", "stdev", "percent_change", "width_ci", "model_type", "index_type")
 
 write.table(trends.csv, file = paste(out.dir, 
                                      site, "_Trends", ".csv", sep = ""), 
