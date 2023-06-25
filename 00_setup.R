@@ -23,12 +23,11 @@ library(mgcv)
 # Create folders as necessary
 if(!dir.exists("Data")) dir.create("Data")
 if(!dir.exists("Output")) dir.create("Output")
+if(!dir.exists("Plots")) dir.create("Plots")
 
 ## Source Scripts
 
 source("./Functions/filterBadDates.r")
-source("./Functions/sqlSave.r")
-source("./Functions/sqlString.r")
 
 ## Assign parameters that have common values across CMMN sites {#Set3.3}
 
@@ -42,7 +41,7 @@ dir.create(data.dir, showWarnings=FALSE, recursive=TRUE)
 
 # set data directory for analysis files; create if not already there
 plot.dir <- paste("./Plots/", max.year, "/", sep = "")
-dir.create(data.dir, showWarnings=FALSE, recursive=TRUE)
+dir.create(plot.dir, showWarnings=FALSE, recursive=TRUE)
 
 # get list of species common names, to be used later
 
@@ -54,22 +53,6 @@ sp.names<-sp.names %>% distinct(species_code, .keep_all= TRUE)
 
 project <- 1005 # same for all
 results.code <- "CMMN" # same for all
-
-# create sql files of indices and trends? If TRUE, trends will be written to sql files and those posted online. 
-write.indices.sql = TRUE
-write.trends.sql = TRUE
-write.migwindowsumm.sql = TRUE  # should always be true - this can be posted for all species - shows when species are observed at a site, and isn't 'sensitive' or open to interpretation as are the trends, for the different classifications of species.
-
-# limits for seasonal windows
-season.pctile1 = 5
-season.pctile2 = 95
-
-# limits for station coverage windows
-station.pctile1 = 5
-station.pctile2 = 95
-
-# set year increment for trends: every 10-year period (10-, 20-, 30-, etc)
-yr.incr <- 10
 
 ## Import site-specific analysis parameters 
 anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") #This will need checked and updated before each analysis
@@ -90,37 +73,6 @@ write.csv(bad_dates, "Data/bad_dates.csv", row.names = FALSE)
 
 }#end try catch
 
-#In 2018 added an error output table to record when INLA crashes for a specific species. 
-
-error <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 4, byrow = FALSE, dimnames = NULL))
-names(error) <- c("Site", "Season", "SpeciesCode", "time.period")
-
-#only need to create the table once per analysis. Error file for recording which species were not analysed.   
-write.table(error, file = paste(out.dir,  "ErrorFile", ".csv", sep = ""), row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
-
-#Orthogonal legendre polynomial transformation to centralize day and day^2 covariates
-# Some examples here: https://online.stat.psu.edu/stat502_fa21/lesson/10/10.2   
-
-poly.legendre <- function(x, degree, minx, maxx){
-  
-  if (min(x) < minx) stop("min(x) < minx")
-  if (max(x) > maxx) stop("max(x) > maxx")
-  
-  if (degree > 4) stop("Degree must be < 5")
-  
-  lg <- length(x)
-  
-  z <- data.frame(x)
-  
-  z$xP1 <- 2 * (x - minx) / (maxx - minx) - 1
-  z$xP2 <- (3 * z$xP1 * z$xP1 - 1) / 2
-  if(degree > 2) z$xP3 <- (5 * z$xP2 * z$xP1 - 2 * z$xP1) / 3
-  if(degree > 3) z$xP4 <- (7 * z$xP3 * z$xP1 - 3 * z$xP2) / 4
-  
-  z  <- z[, -1]
-}
-
-
 ##Load generation length table
 
 gen<-nc_query_table(username=ID, "vwResultsSocbSpecies")
@@ -135,15 +87,3 @@ loess_func <- function(i,y){
   preds <- predict(tmp)
   return(preds)
 }
-
-##BBS slope trend function    
-bsl = function(i){
-  n = length(wy)
-  sy = sum(i)
-  sx = sum(wy)
-  ssx = sum(wy^2)
-  sxy = sum(i*wy)
-  b = (n*sxy - sx*sy)/(n*ssx - sx^2)
-  return(b)
-}
-

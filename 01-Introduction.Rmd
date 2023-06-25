@@ -22,3 +22,7 @@ Environment and Climate Change Canada provides critical support and resources to
 Birds Canada is the administrative home for the CMMN. It manages and archives migration monitoring data for the network, regularly analyzes and produces population trends, and makes these data accessible to the public and other researchers through NatureCounts. Birds Canada also coordinates network-wide research projects and conducts various secretariat duties for the CMMN. 
 
 
+## Author Notes
+
+Version: July 2023
+Author: Danielle Ethier, Population Scientist, Birds Canada, dethier@birdscanada.org

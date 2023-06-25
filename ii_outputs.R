@@ -5,9 +5,10 @@
 
 ## Create text file for indices
 
-indices.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 13, byrow = FALSE,
+indices.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 24, byrow = FALSE,
                                     dimnames = NULL))
-names(indices.csv) <- c("results_code", "area_code", "year", "season", "period", "species_code", "species_id", "index", "stdev", "upper_ci", "lower_ci", "LOESS_index", "meanObs")  
+names(indices.csv) <- c("upload_id",	"results_code",	"version",	"area_code",	"species_code",	"species_name",	"species_sci_name",	"year",	"season",	"period",	"species_id",	"index",	"stderr",	"stdev",	"upper_ci",	"lower_ci",	"trend_id",	"smooth_index",	"smooth_upper_ci",	"smooth_lower_ci",	"upload_dt",	"error", "meanObs", "analysis_code") 
+
 
 write.table(indices.csv, file = paste(out.dir, 
                                       site, "_AnnualIndices",".csv", sep = ""), 
@@ -15,11 +16,21 @@ write.table(indices.csv, file = paste(out.dir,
 
 
 ## Create text file for trends (appending year periods into one file)
-trends.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 18, 
+trends.csv <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 59, 
                                    byrow = FALSE, dimnames = NULL))
-names(trends.csv) <- c("results_code", "version", "area_code", "species_code", "species_id", "season", "period", "years", "year_start", "year_end", "trnd", "lower_ci", "upper_ci", "stdev", "percent_change", "width_ci", "model_type", "index_type")
+
+names(trends.csv) <- c("results_code",	"version",	"area_code",	"species_code",	"species_name",	"species_sci_name",	"species_id",	"season",	"period",	"years",	"year_start",	"year_end",	"trnd",	"index_type",	"upper_ci",	"lower_ci",	"stderr",	"model_type",	"model_fit",	"percent_change",	"percent_change_low",	"percent_change_high",	"prob_decrease_0",	"prob_decrease_25",	"prob_decrease_30",	"prob_decrease_50",	"prob_increase_0",	"prob_increase_33",	"prob_increase_100",	"confidence",	"precision_num",	"precision_cat",	"coverage_num",	"coverage_cat",	"goal",	"goal_lower",	"sample_size",	"sample_total",	"subtitle",	"pval",	"pval_str",	"post_prob",	"trnd_order",	"dq",	"slope_trend",	"prob_LD",	"prob_MD",	"prob_LC",	"prob_MI",	"prob_LI",	"quantile_050",	"quantile_165",	"quantile_835",	"quantile_950",	"trend_id",	"upload_dt",	"error", "stdev", "analysis_code")
 
 write.table(trends.csv, file = paste(out.dir, 
                                      site, "_Trends", ".csv", sep = ""), 
             row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+
+#In 2018 added an error output table to record when INLA crashes for a specific species. 
+
+error <- as.data.frame(matrix(data = NA, nrow = 1, ncol = 4, byrow = FALSE, dimnames = NULL))
+names(error) <- c("Site", "Season", "SpeciesCode", "time.period")
+
+#Error file for recording which species were not analysed.   
+write.table(error, file = paste(out.dir,  site, "_ErrorFile", ".csv", sep = ""), row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
+
 

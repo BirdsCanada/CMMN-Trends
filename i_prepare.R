@@ -23,7 +23,7 @@ write.csv(in.data, paste(data.dir, site, "_Raw_Data.csv", sep=""), row.names = F
 
 } #end of try catch, which looks for proceed data on the data.dir first
 
-in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
+in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id)
 
 # We only want sites LPBO1, LPBO2, and LPBO3. 
 if(station == "LPBO") {
@@ -47,6 +47,7 @@ if((station == "MGBO")) {
     droplevels()
 }
 
+
 #If RPBO only want site RPBO (not PEBA or RBPO2)
 if((station == "RPBO")) {
   in.data <- in.data %>%
@@ -66,6 +67,14 @@ in.data <- in.data %>%
   mutate(date = ymd(paste(YearCollected, MonthCollected, DayCollected, sep = "/")),
          doy = yday(date),
          season = if_else(doy < 180, "Spring", "Fall"))
+
+#ACBO fall coverage does not meet minimum requirements. Remove all fall data. 
+
+if((station == "ACBO")) {
+  in.data <- in.data %>%
+    filter(season == "Spring") %>%
+    droplevels()
+}
 
 # note that this assumes that if stations that are no longer collecting are to be analyzed, that the last year is specified in the anal.param table:
 min.yr.filt <- ifelse(is.na(anal.param[t,"min.year"]),
@@ -123,65 +132,12 @@ event.data <- in.data %>%
   ungroup() %>%
   as.data.frame()
 
-## Assign Species Code, and drop species that won't be analyzed
+## Assign updated species codes base on species_id since some have changed. 
 
-#Because speciesIDs often change with updates to taxonomies, we want to use the species codes assigned during data entry, and update the speciesIDs in the data accordingly. 
-#There are also species that need to be combined for analysis. The following species have subspecies, etc, that should be analyzed as one species. Prior to analysis, we need to re-assign species codes so that they match the primary code (EATO, GCTH, etc).  Denis may have fixed some in database (e.g. WISN), but won’t hurt to keep in script until we’re sure:
-  
-#EATO: 18560, 18570 (RSTO, URST, EATO)
-#GCTH: 15551, 15560, 15570 (GBTH, GCBT, GCTH, BITH)
-#NSTS: 18940, 18961 (NESP, STSP, NSTS)
-#SOVI: 13390, 13410, 13420 (SOVI, CAVI, BHVI)
-#TRFL: 12150, 12160, 12170 (TRFL, ALFL, WIFL)
-
-#WEFL: 12231, 12240 (WEFL, PSFL)
-#WISN: 4940, 4950 (WISN, COSN)
-#WPWI: 7870, 7871 (WPWI, EWPW, EWWP)
-
-#At the end of this section, we add the counts for a given species/dates, in case 
-#e.g., BHVI, SOVI were recorded on the same date, there will now be two records for SOVI on that date. We want the total count across these records.
-
-##Re-assign species codes
-
-in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "WISN", "NOFL", "WPWI", "PAWA","DEJU","YRWA")) %>%
-  group_by(SpeciesCode) 
-
-in.data <- in.data %>%
-  mutate(SpeciesCode = as.character(SpeciesCode),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "OLDS"), "LTDU"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "HEGU"), "HERG"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "BHVI"|SpeciesCode == "CAVI"), "SOVI"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "YEWA"), "YWAR"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "RSTO"|SpeciesCode == "URST"), "EATO"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "GBTH"|SpeciesCode == "GCBT"|SpeciesCode == "BITH"), "GCTH"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "NESP"|SpeciesCode == "STSP"), "NSTS"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "ALFL"|SpeciesCode == "WIFL"), "TRFL"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "GWCS"|SpeciesCode == "EWCS"), "WCSP"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "AGWT"), "GWTE"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "PSFL"), "WEFL"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "COSN"), "WISN"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "YSFL"|SpeciesCode == "FLIN"), "NOFL"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "EWPW"|SpeciesCode == "EWWP"), "WPWI"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "WPWA"|SpeciesCode == "UNPW"|SpeciesCode == "YPWA"), "PAWA"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "UYRW"|SpeciesCode == "MYWA"|SpeciesCode == "AUWA"), "YRWA"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "SCJU"|SpeciesCode == "GHJU"|SpeciesCode == "ORJU"|SpeciesCode == "UDEJ"|SpeciesCode == "WWJU"|SpeciesCode == "YDEJ"|SpeciesCode == "PSJU"), "DEJU"))
-
-in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "WISN", "NOFL", "WPWI", "PAWA","DEJU","YRWA")) %>%
-  group_by(SpeciesCode)
-
-## re-assign speciesID based on the new species codes
-## This ensures species codes/ids are consistent across stations and
-## years/days within a station
-
-sp.list1 <- select(in.data, SpeciesCode) %>% distinct()
-
-sp.code<-search_species_code(authority = "CMMN", results="all")
-
-sp.list <- left_join(sp.list1, sp.code, by = c("SpeciesCode" = "CMMN")) %>%
-  filter(!is.na(SpeciesCode))
-
-in.data <- left_join(select(in.data, -species_id), sp.list, by = "SpeciesCode") %>%
-  filter(!is.na(species_id))
+sp.codes<-meta_species_codes()
+sp.codes<-sp.codes %>% filter(authority=="CMMN" & rank==1) %>% select(species_id, species_code)
+in.data<-left_join(in.data, sp.codes, by="species_id")
+in.data<-in.data %>% dplyr::rename(SpeciesCode=species_code)
 
 ## get total count by species, date, station
 in.data$ObservationCount<-as.numeric(in.data$ObservationCount)
@@ -271,7 +227,7 @@ if(site == "LPBO") {
 } #end if LPBO
 
 #Remove NA years
-in.data<-in.data %>% drop_na(YearCollected)
+in.data<-in.data %>% drop_na(YearCollected) %>% drop_na(species_id)
 
 #write clean data to file
 write.csv(in.data, paste(data.dir, site, "_Clean_Data.csv", sep=""), row.names = FALSE)
