@@ -2,3 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
+
+/Plots
+/Output
+/Data
+
+.pdf
+.csv
+.xlsx
+

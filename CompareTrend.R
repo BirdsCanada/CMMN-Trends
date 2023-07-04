@@ -56,3 +56,17 @@ ggplot(indx.CAGO, aes(x=index_2018, y=index), colour=season)+
   xlab("Index 2018")+
   ggtitle("MBGO")+
   theme_classic()
+
+
+####
+
+site="LPBO"
+
+trnd2021 <- read.csv(paste(in.dir, site, "_Trends.csv", sep = ""))
+trnd2021<-trnd2021 %>% filter(period=="all years") %>% select(species_code, species_name, analysis_code, version)
+
+trnd2018 <- read.csv(paste(in.dir, site, ".Trends.2018.csv", sep = ""))
+trnd2018 <- trnd2018 %>% filter(period=="all years")%>% select(SpeciesCode)
+
+LBPOtrnd<-full_join(trnd2018, trnd2021, by=c("SpeciesCode"="species_code"))
+

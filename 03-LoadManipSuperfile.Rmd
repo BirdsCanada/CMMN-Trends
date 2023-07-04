@@ -1,7 +1,4 @@
-19#Superfile 
-
-Version: May 17 2023
-Author: Danielle
+#Superfile 
 
 These scripts allow you to create the data outputs needed for the Superfile creation which are used for species classification. Since the data processing is different we will create a separate workflow. This file does not need updated every year, but perhaps every 5-10 years as migration timings shift due to climate change, for example. 
 

@@ -54,10 +54,7 @@ for(k in 1:length(species.list)) {
     filter(SurveyAreaIdentifier %in% site.list) %>%
     droplevels()
   
-  # some species-season have multiple code. Limit to one (random) selection. 
-  df.superfile <- df.superfile %>%  group_by(SiteCode, species_code, period, SurveyAreaIdentifier) %>% slice_head(n=1) %>% ungroup()
-  
-  if(site != "LPBO") {
+    if(site != "LPBO") {
     df.migWindows <- df.superfile %>%
       filter(SpeciesCode == species.list[k]) %>%
       mutate(SpeciesCode = as.character(SpeciesCode),
@@ -66,26 +63,26 @@ for(k in 1:length(species.list)) {
       droplevels()
   }
   
-  
-  #THIS WILL NEED CHECKED WHEN RUNNING LPBO
-  if((site == "LPBO")) {
+ 
+  if(site == "LPBO") {
     df.migWindows <- df.superfile %>%
-      mutate(SurveyAreaIdentifier = SiteCode,
-             SpeciesCode = species_code,
-             season = period) %>% 
       filter(SpeciesCode == species.list[k], 
              lpbo_combine == 1) %>%
       mutate(SpeciesCode = as.character(SpeciesCode),
              season = as.character(season)) %>%
       select(SurveyAreaIdentifier, SpeciesCode, season, analysis_code) %>%
       droplevels()
-  }
+  }# 
   
+  # some species-season have multiple code. Limit to one (random) selection. 
+  df.superfile <- df.superfile %>%  group_by(species_code, period) %>% slice_head(n=1) %>% ungroup() 
   
+
   sp.data <- left_join(sp.data, df.migWindows, by = c("SurveyAreaIdentifier", "SpeciesCode", "season"), multiple="all")
   sp.data$YearCollected<-as.character(sp.data$YearCollected)
   sp.data$MonthCollected<-as.numeric(sp.data$MonthCollected)
   sp.data$DayCollected<-as.numeric(sp.data$DayCollected)
+  sp.data <- sp.data %>% drop_na(analysis_code)
   
   ## FILTER SPECIES THAT DON'T MEET MIN NUMBER OF YEARS
   ## This is done based on the analysis code of the species 
@@ -96,7 +93,9 @@ for(k in 1:length(species.list)) {
   ## This may cause problems if only detected in last half of years surveyed.
   
   ## number of years a species must be detected on to be analyzed, currently defined as half of the years surveyed.
-  
+
+if(nrow(sp.data)>0)  {
+    
   seas.list <- as.character(unique(sp.data$season))
   
 for (j in 1:length(seas.list)) {
@@ -109,8 +108,7 @@ for (j in 1:length(seas.list)) {
     }
     
     if(nrow(df.tmp) > 0) { 
-    
-  if(analysis_code=="M"){
+    if(analysis_code=="M"){
   
     tmp <- df.tmp %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, anal.param[t , "obs.var.M"], analysis_code) 
     # rename count variable, so consistent for following steps
@@ -163,10 +161,10 @@ for (j in 1:length(seas.list)) {
     select(-meanObsDays) %>%
     as.data.frame()
   
-  } #end if analysis code = M
+    } #end if analysis code == M
   
 #select the other response variable if not M species or if M species does not meet minimum data requirement. 
-  if(analysis_code!="M"|nrow(df.tmp) == 0){
+  if(analysis_code!="M"){
 
    df.tmp <- droplevels(subset(sp.data, season == seas.list[j]))
    
@@ -221,9 +219,9 @@ for (j in 1:length(seas.list)) {
     tmp <- left_join(df.abund, tmp, by = c("SurveyAreaIdentifier", "season"), multiple="all") %>%
       select(-meanObsDays) %>%
       as.data.frame()
-    
-  } #end if analysis code != M
-    } #end if nrow df.tmp
+   
+  } #end if analysis code != M 
+   
   
 #continue if there is data
   df.tmp<-tmp
@@ -353,7 +351,7 @@ for (j in 1:length(seas.list)) {
               
               #Print final error table to file
               
-              write.table(error, file = paste(out.dir, "ErrorFile.csv", sep = ""), row.names = FALSE, append = TRUE, 
+              write.table(error, file = paste(out.dir, site, "ErrorFile.csv", sep = ""), row.names = FALSE, append = TRUE, 
                           quote = FALSE, sep = ",", col.names = FALSE)
     }	#end try-error statement
     
@@ -706,10 +704,12 @@ for (j in 1:length(seas.list)) {
                 
         } # end try error trend top.modelS 
           } # end try error trend top.model 
-             } # end if nrow>0
-       
+             } # end if nrow<0
+             } # end if nrow<0     
        } #end of for (i in 1:length(seas.list)) 
+       } # if nrow sp.data>0
       } # end of   for (k in 1:length(sp.list))
+  
     
 
 #test plot
