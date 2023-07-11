@@ -10,7 +10,7 @@ editor_options:
 ```
 
 
-These scripts set up the data for each site, run the seasonal species-specific analysis, and plot the output for review. Most of the heavy lifting is done in the background. However, if something breaks or doesn't work, the analysis may haul. 
+These scripts set up the data for each site, run the seasonal species-specific analysis, and plot the output for review. Most of the heavy lifting is done in the background. However, if something breaks or doesn't work, the analysis may halt. 
 
 ## Setup
 
