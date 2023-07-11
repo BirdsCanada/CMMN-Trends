@@ -7,6 +7,7 @@ source("00_setup.R")
   use.trfl <- anal.param[t, "use.trfl"]
   responseM<-anal.param[t , "obs.var.M"]
   responseO<-anal.param[t , "obs.var.O"]
+  min.year.test<-anal.param[t , "min.year"]
     
 ## Import Data
 
@@ -20,13 +21,22 @@ in.data <- nc_data_dl(collections = collection, fields_set = "extended", usernam
 
 } #end of try catch, which looks for the raw data in the data.dir first
 
-#check and assign min year
+# note that this assumes that if stations that are no longer collecting are to be analyzed, that the last year is specified in the anal.param table:
+min.yr.filt <- ifelse(is.na(anal.param[t,"min.year"]),
+                      min(in.data$YearCollected), anal.param[t,"min.year"])
 
-min.yr<- min(in.data$YearCollected)
+max.yr.filt <- ifelse(is.na(anal.param[t,"max.year"]),
+                      max.year, anal.param[t,"max.year"])
 
-min.year <- ifelse(min.yr>min.year.test, min.yr, min.year.test)
+# Subset data to specified year range
+in.data <- in.data %>%
+  filter(YearCollected >= min.yr.filt & YearCollected <= max.yr.filt)
 
-in.data<- in.data %>% filter(YearCollected >= min.year & YearCollected <= max.year)
+#print("year range:"); print(range(in.data$YearCollected))
+
+# get the minimum number of years a species must be detected to be included. Could be MUCH more conservative... currently using 1/2 of years surveyed, but those species might also get kicked out by abundance filters below.
+min.yrs.detect <- trunc(length(unique(in.data$YearCollected))/2) 
+
 in.data <- in.data %>% select(SurveyAreaIdentifier, project_id, ObservationCount, ObservationCount2, ObservationCount3, ObservationCount4, SiteCode, YearCollected, MonthCollected, DayCollected, species_id, SpeciesCode)
 
 # we only want sites LPBO1, LPBO2, and LPBO3. 
@@ -86,37 +96,12 @@ event.data <- in.data %>%
   ungroup() %>%
   as.data.frame()
 
-## Assign Species Code, and drop species that won't be analyzed
+## Assign updated species codes base on species_id since some have changed. 
 
-## re-assign species codes
-
-in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "WISN", "NOFL", "WPWI", "PAWA","DEJU","YRWA")) %>%
-  group_by(SpeciesCode) %>%
-  tally()
-
-in.data <- in.data %>%
-  mutate(SpeciesCode = as.character(SpeciesCode),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "OLDS"), "LTDU"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "HEGU"), "HERG"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "BHVI"|SpeciesCode == "CAVI"), "SOVI"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "YEWA"), "YWAR"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "RSTO"|SpeciesCode == "URST"), "EATO"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "GBTH"|SpeciesCode == "GCBT"|SpeciesCode == "BITH"), "GCTH"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "NESP"|SpeciesCode == "STSP"), "NSTS"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "ALFL"|SpeciesCode == "WIFL"), "TRFL"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "GWCS"|SpeciesCode == "EWCS"), "WCSP"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "AGWT"), "GWTE"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "PSFL"), "WEFL"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "COSN"), "WISN"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "YSFL"|SpeciesCode == "FLIN"), "NOFL"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "EWPW"|SpeciesCode == "EWWP"), "WPWI"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "WPWA"|SpeciesCode == "UNPW"|SpeciesCode == "YPWA"), "PAWA"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "UYRW"|SpeciesCode == "MYWA"|SpeciesCode == "AUWA"), "YRWA"),
-         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "SCJU"|SpeciesCode == "GHJU"|SpeciesCode == "ORJU"|SpeciesCode == "UDEJ"|SpeciesCode == "WWJU"|SpeciesCode == "YDEJ"|SpeciesCode == "PSJU"), "DEJU"))
-
-in.data %>% filter(SpeciesCode %in% c("SOVI", "EATO", "NSTS", "TRFL", "WEFL", "WISN", "NOFL", "WPWI", "PAWA","DEJU","YRWA")) %>%
-  group_by(SpeciesCode) %>%
-  tally()
+sp.codes<-meta_species_codes()
+sp.codes<-sp.codes %>% filter(authority=="CMMN" & rank==1) %>% select(species_id, species_code)
+in.data<-left_join(in.data, sp.codes, by="species_id")
+in.data<-in.data %>% dplyr::rename(SpeciesCode=species_code)
 
 
 #total number of years each doy surveyed at each site (include 0-obs counts)
