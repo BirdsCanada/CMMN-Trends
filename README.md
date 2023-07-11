@@ -1,12 +1,18 @@
 # CMMN-Trends
 
-Analytically scripts to process and analyse count data collected by the [Canadian Migration Monitoring Network (CMMN)](https://www.birdscanada.org/bird-science/canadian-migration-monitoring-network-cmmn). There are three main options for analysis: 
+Analytically scripts to process and analyse count data collected by the [Canadian Migration Monitoring Network (CMMN)](https://www.birdscanada.org/bird-science/canadian-migration-monitoring-network-cmmn). The workflow is as follows:
 
-LoadManipEffort - scripts summarizes and plots various units of effort over time
+01-Introdcution and overview of CMMN
 
-LoadManipSuperfile - scripts summarizes and plots migration timing for Species classification (see Methods for definitions)
+02-Methods used for trend analysis 
 
-LoadManipTrends - scripts runs GAM trend analysis and plot outputs
+There are three main options for analysis: 
+
+03-LoadManipEffort - scripts summarizes and plots various units of effort over time. 
+
+03-LoadManipSuperfile - scripts summarizes and plots migration timing for species classification (see Methods for definitions)
+
+03-LoadManipTrends - scripts runs GAM trend analysis and plot outputs
 
 
 Author: Danielle Ethier, Population Scientist, Birds Canada, dethier@birdscanada.org
