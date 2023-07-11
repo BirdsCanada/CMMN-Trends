@@ -8,9 +8,9 @@ Analytically scripts to process and analyse count data collected by the [Canadia
 
 There are three main options for analysis: 
 
-03-LoadManipEffort - scripts summarizes and plots various units of effort over time. 
+03-LoadManipEffort - scripts summarize and plot various units of effort over time. 
 
-03-LoadManipSuperfile - scripts summarizes and plots migration timing for species classification (see Methods for definitions)
+03-LoadManipSuperfile - scripts summarize and plot migration timing for species classification (see Methods for definitions)
 
 03-LoadManipTrends - scripts runs GAM trend analysis and plot outputs
 
