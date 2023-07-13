@@ -436,7 +436,7 @@ for (j in 1:length(seas.list)) {
                   }
                
                   mn.yr1 <- as.data.frame(mn.yr1)
-                  names(mn.yr1) <- c("index", "lower_ci", "upper_ci", "SD")
+                  names(mn.yr1) <- c("index", "upper_ci", "lower_ci", "SD")
                   
                #   mn.yrS<-NULL
                #   mn.yrS<-matrix(nrow=nyears, ncol=4)
