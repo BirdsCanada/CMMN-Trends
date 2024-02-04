@@ -59,16 +59,26 @@ in.data <- in.data %>%
 in.data <- in.data %>% distinct(YearCollected, MonthCollected, DayCollected, .keep_all = TRUE) 
 
 # Use the coverage doy filter from the superfile assessment to trim the data to only include the core doy
-# note that the doy coverage file will need to have been generated before the effort assessment. 
+# note that the doy coverage file will need to have been generated before the effort assessment.
+# this output was not saved
 
-doy<-read.csv(paste(data.dir, site, "_CoverageDOY.csv", sep=""))
-min.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(min))
-max.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(max))
-min.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(min))
-max.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(max))
-  
-fall<- try(in.data %>% filter(season=="Fall", doy>=min.fall, doy<=max.fall), silent=TRUE)
-spring<-try(in.data %>% filter(season=="Spring", doy>=min.spring, doy<=max.spring), silent = TRUE)
+#doy<-read.csv(paste(data.dir, site, "_CoverageDOY.csv", sep=""))
+#min.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(min))
+#max.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(max))
+#min.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(min))
+#max.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(max))
+
+#trim doy by seasonal windows
+fall<-in.data %>% filter(season=="Fall")
+windowsf <- with(fall, round(quantile(doy, probs = c(2.5, 97.5)/100, na.rm = T), digits = 0))
+fall <- subset(fall, doy >= windowsf[1] & doy <= windowsf[2])
+
+spring<-in.data %>% filter(season=="Spring")
+windowss <- with(spring, round(quantile(doy, probs = c(2.5, 97.5)/100, na.rm = T), digits = 0))
+spring <- subset(spring, doy >= windowss[1] & doy <= windowss[2])
+
+#fall<- try(in.data %>% filter(season=="Fall", doy>=min.fall, doy<=max.fall), silent=TRUE)
+#spring<-try(in.data %>% filter(season=="Spring", doy>=min.spring, doy<=max.spring), silent = TRUE)
 
 in.data<-rbind(spring, fall)
 
@@ -119,7 +129,7 @@ plot.data<-in.data %>% select(-doy)
 plot.data$YearCollected<-as.factor(plot.data$YearCollected)
 plot.data<-plot.data %>% melt(id=c("SiteCode", "YearCollected", "season_f"))
 levels(plot.data$variable)<-c("Std. Net Hours", "Std. Observer Hours", "Census/ Std. Watch", "Ground Trap Hours", "Number Observers")
-lot.data<-plot.data %>% filter(!is.na(value))
+plot.data<-plot.data %>% filter(!is.na(value))
 
 out.plot<-ggplot(data = plot.data, aes(x=YearCollected, y=value, colour=season_f))+
   geom_boxplot()+
@@ -136,6 +146,8 @@ pdf(paste(plot.dir, site, "_", "EffortPlot.pdf", sep = ""),
 try(print(out.plot), silent = TRUE)
 
 while(!is.null(dev.list())) dev.off()
+
+write.csv(plot.data, paste(out.dir, station, "_Effort.csv", sep=""), row.names = FALSE)
 
 
 #CREATE PLOT #3
@@ -242,6 +254,8 @@ pdf(paste(plot.dir, site, "_", "CoverageCodePlot.pdf", sep = ""),
 try(print(out.plot), silent = TRUE)
 
 while(!is.null(dev.list())) dev.off()
+
+write.csv(plot.data, paste(out.dir, station, "_CoverageCode.csv", sep=""), row.names = FALSE)
 
 
 

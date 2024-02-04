@@ -27,7 +27,7 @@ View(anal.param)
 ```{r chooseSite}
 
 #Select a single site based on row number in anal.param
-t <- 3
+t <- 1
 
 ```
 
@@ -42,3 +42,23 @@ source("effort.R")
 ```
 
 These script will output a summary of effort variable in the 'out.dir' and plots in the 'plot.dir'. 
+
+## Loop
+
+If you wand to loop through all the sites, run the following code. 
+
+```{r loop}
+
+source("00_setup.R")
+
+#anal.param<-anal.param[6:9, ] # to test on different stations
+
+for(t in 1:nrow(anal.param)){
+  
+  source("effort.R")
+ 
+} #end nrow(anal.param)
+
+
+
+```

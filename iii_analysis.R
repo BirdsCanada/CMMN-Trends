@@ -262,10 +262,11 @@ for (j in 1:length(seas.list)) {
         kyears<- ceiling(nyears/4) #round up to nearest whole number
         
         ndays <- length(unique(df.tmp$doyfac))
-        kdays<- ceiling(ndays/8)
+        #kdays<- ceiling(ndays/8)
         
-        #kdays<-2 #polynomial like previous
+        kdays<-3 #polynomial like previous
         
+      
        #smooth years
         smy<-smoothCon(s(YearCollected, bs="cr", k=kyears), data=df.tmp)[[1]]
         Xsmy<-smy$X #basis function
@@ -288,11 +289,11 @@ for (j in 1:length(seas.list)) {
         lcs<-c(lcs.y, lcs.d)
         
         #Use penalised complex prior for random year effect
-        hyper.iid<-list(prec=list(prior="pc.prec", param=c(2,0.05)))
+        hyper.iid<-list(prec=list(prior="pc.prec", param=c(c(1, 0.01))))
                 
         if(length(unique(df.tmp$SurveyAreaIdentifier)) == 1) {                                         
          
-           index.gam<- ObservationCount ~ -1 + Xsmy + Xsdy + f(fyear, model="iid", hyper=hyper.iid)
+           index.gam<- ObservationCount ~ -1 + Xsmy + Xsdy + f(fyear, model = "iid", hyper=hyper.iid)
            index.gamS<- ObservationCount ~ -1 + Xsmy + Xsdy 
            }
    
@@ -300,7 +301,7 @@ for (j in 1:length(seas.list)) {
         if(length(unique(df.tmp$SurveyAreaIdentifier)) > 1) {                                         
          
           index.gam<- ObservationCount ~ -1 + Xsmy + Xsdy +
-            + f(SurveyAreaIdentifier, model = "iid") + f(yearfac, model="iid")
+            + f(SurveyAreaIdentifier, model = "iid") + f(yearfac, model = "iid", hyper=hyper.iid)
           
           index.gamS<- ObservationCount ~ -1 + Xsmy + Xsdy +
             + f(SurveyAreaIdentifier, model = "iid") 
@@ -360,6 +361,10 @@ for (j in 1:length(seas.list)) {
   
           #first define the is.not.null function
           is.not.null <- function(x) !is.null(x)
+          
+          if(class(top.model) == 'try-error'| class(top.model) == is.null(top.model)){
+           top.model<-top.modelS 
+          }
          
           if(class(top.model) != 'try-error'& is.not.null(top.model)){
             if(class(top.modelS) != 'try-error'& is.not.null(top.modelS)){
@@ -555,7 +560,7 @@ for (j in 1:length(seas.list)) {
                     tenyr<-endyr-10
                     yrten<-nyears-9
                     
-                    time.period = c("all years", "10-years", "3-generation")
+                    time.period = c("all years", "10-years", "3Gen-Recent")
                     Y1.trend <- c(startyr, tenyr, threegen)
                     Y2.trend <- c(endyr, endyr, endyr)
                     

@@ -42,7 +42,7 @@ View(anal.param)
 Select your station. 
 ```{r chooseSite}
 
-t <- 18
+t <- 7
 
 ```
 

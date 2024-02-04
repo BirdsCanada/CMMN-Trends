@@ -110,6 +110,7 @@ for(m in 1:(ceiling(length(sp.list)/6))) {
     scale_y_continuous(trans='log10') +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     theme(legend.position = "none")+
+    theme(text=element_text(size=20))+
     theme_classic()
   
   #To plot bt indiex values
