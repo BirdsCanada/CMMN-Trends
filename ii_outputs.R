@@ -11,7 +11,7 @@ names(indices.csv) <- c("results_code", "version", "area_code", "season", "perio
 
 
 write.table(indices.csv, file = paste(out.dir, 
-                                      site, "_", seas, "_AnnualIndices",".csv", sep = ""), 
+                                      site, "_AnnualIndices",".csv", sep = ""), 
             row.names = FALSE, append = FALSE, quote = FALSE, sep = ",")
 
 
