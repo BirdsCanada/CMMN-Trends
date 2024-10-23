@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Trends
 
 
@@ -42,7 +47,7 @@ View(anal.param)
 Select your station. 
 ```{r chooseSite}
 
-t <- 7
+t <- 19
 
 ```
 

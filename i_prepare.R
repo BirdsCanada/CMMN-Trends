@@ -165,7 +165,7 @@ df.superfile <-df.superfile %>%  mutate(SurveyAreaIdentifier = SiteCode,
 
 sp.analyze <- df.superfile %>%
   select(SurveyAreaIdentifier, SpeciesCode, season, start_date, end_date, analysis_code, lpbo_combine) %>%
-  distinct() %>%
+  distinct(SurveyAreaIdentifier, SpeciesCode, season, .keep_all = TRUE) %>%
   droplevels()
 
 in.data <- left_join(sp.analyze, in.data, by = c("SurveyAreaIdentifier", "SpeciesCode", "season"), multiple = "all") %>%

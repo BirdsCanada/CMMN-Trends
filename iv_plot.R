@@ -7,8 +7,8 @@ require(ggplot2)
 require(naturecounts)
 
 
-in.dir <- paste("Output/", max.year, "/", sep = "")
-out.dir <- paste("Plots/", max.year, "/", sep = "")
+out.dir <- paste("Output/", max.year, "/", sep = "")
+plot.dir <- paste("Plots/", max.year, "/", sep = "")
 site <- as.character(anal.param[t, "site"])
 
 #add species English and French name
@@ -17,56 +17,54 @@ sp.name<-sp.name %>% select(species_id, english_name, french_name)
 
 # read in trend output
 
-trnd <- read.csv(paste(in.dir, site, "_Trends.csv", sep = ""))
+trnd <- read.csv(paste(out.dir, site, "_Trends.csv", sep = ""))
 trnd<- left_join(trnd, sp.name, by="species_id")
 
 trnd <- trnd %>%
-  filter(!(is.na(species_code)) & period == "all years" & index_type =="endpoint")
+  filter(!(is.na(species_code)) & period == "all years")
 
 trnd.spr <- trnd %>%
   filter(season == "Spring") %>%
   mutate(trnd.spr = trnd,
          lower_ci_trend.spr = lower_ci,
-         upper_ci_trend.spr = upper_ci,
-         anal_code.spr = analysis_code) %>%
-  select(species_code, english_name, french_name, area_code, trnd.spr, lower_ci_trend.spr, upper_ci_trend.spr, index_type, anal_code.spr)
+         upper_ci_trend.spr = upper_ci) %>%
+  select(species_code, english_name, french_name, area_code, trnd.spr, lower_ci_trend.spr, upper_ci_trend.spr)
 
 
 trnd.fall <- trnd %>%
   filter(season == "Fall") %>%
   mutate(trnd.fall = trnd,
          lower_ci_trend.fall = lower_ci,
-         upper_ci_trend.fall = upper_ci, 
-         anal_code.fall = analysis_code) %>%
-  select(species_code, english_name, french_name, area_code, trnd.fall, lower_ci_trend.fall, upper_ci_trend.fall, index_type, anal_code.fall)
+         upper_ci_trend.fall = upper_ci) %>%
+  select(species_code, english_name, french_name, area_code, trnd.fall, lower_ci_trend.fall, upper_ci_trend.fall)
 
 options(digits = 2)
 
-sp.trnd <- full_join(trnd.spr, trnd.fall, by = c("species_code", "area_code", "english_name", "french_name", "index_type"), multiple="all") 
+sp.trnd <- full_join(trnd.spr, trnd.fall, by = c("species_code", "area_code", "english_name", "french_name"), multiple="all") 
 
 
 sp.trnd <- sp.trnd %>%
   mutate(sp.trnd = if_else((!is.na(trnd.spr) & !is.na(trnd.fall)), 
-                           paste(english_name, "/", " \n", french_name, "\n Spring (", anal_code.fall, "): ", round(trnd.spr, digits = 2),  
+                           paste(english_name, "/", " \n", french_name, "\n Spring ", round(trnd.spr, digits = 2),  
                                  " (", round(lower_ci_trend.spr, digits = 2), ", ",
-                                 round(upper_ci_trend.spr, digits = 2), ")\n Fall (", anal_code.fall, ") : ", 
+                                 round(upper_ci_trend.spr, digits = 2), ")\n Fall ", 
                                  round( trnd.fall, digits = 2),  " (",
                                  round( lower_ci_trend.fall, digits = 2), ", ",
                                  round( upper_ci_trend.fall, digits = 2),  ")", sep = ""), 
                            if_else(
                              is.na( trnd.spr), 
-                             paste( english_name, "/", "\n",  french_name, "\n Fall (", anal_code.fall, ") : ", 
+                             paste( english_name, "/", "\n",  french_name, "\n Fall ", 
                                     round( trnd.fall, digits = 2),  " (", round( lower_ci_trend.fall, digits = 2), ", ",
                                     round( upper_ci_trend.fall, digits = 2), ")", sep = ""), 
                              if_else(
                                is.na( trnd.fall),
-                               paste( english_name, "/", "\n",  french_name, "\n Spring (", anal_code.spr, ") : ", 
+                               paste( english_name, "/", "\n",  french_name, "\n Spring ", 
                                       round( trnd.spr, digits = 2),  " (", round( lower_ci_trend.spr, digits = 2), ", ", 
                                       round( upper_ci_trend.spr, digits = 2), ")", sep = ""), "NA"))))
 
 # read in annual index output
 
-index <- read.csv(paste(in.dir, site, "_AnnualIndices.csv", sep = ""))
+index <- read.csv(paste(out.dir, site, "_AnnualIndices.csv", sep = ""))
 
 sp.name<-meta_species_taxonomy()
 sp.name<-sp.name %>% select(species_id, english_name, french_name, order_taxon)
@@ -75,8 +73,7 @@ index<- left_join(index, sp.name, by="species_id")
 index <- index %>%
   filter(!is.na(species_code) & period == "all years") %>%
   dplyr::select(index, lower_ci, upper_ci,
-                species_code, year, season, area_code, species_id, meanObs, 
-                english_name, french_name, order_taxon)
+                species_code, year, season, area_code, species_id, english_name, french_name, order_taxon)
 
 plot.dat <- full_join(index, sp.trnd, by = c("area_code", "species_code", "english_name", "french_name"), multiple="all")
 plot.dat <- plot.dat[order(plot.dat$order_taxon),]
@@ -134,7 +131,7 @@ for(m in 1:(ceiling(length(sp.list)/6))) {
 
 length(out.plot)
 # Plot to PDF file
-pdf(paste(out.dir, site, ".IndexPlot.pdf", sep=""),
+pdf(paste(plot.dir, site, ".IndexPlot.pdf", sep=""),
     height = 10, width = 8, paper = "letter")
 try(print(out.plot[[1]], silent=T))
 try(print(out.plot[[2]], silent=T))

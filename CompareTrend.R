@@ -43,18 +43,28 @@ index2018 <- index2018 %>% filter(period=="all years") %>%
   dplyr::rename(species_code=SpeciesCode, index_2018=index.bt) %>% 
   select(species_code, index_2018, season, year)
 
-options(digits = 2)
+
+ptions(digits = 2)
 indx<-full_join(index2018, index2021, by=c("species_code", "season", "year"), multiple="all")
 
-indx.CAGO<-indx %>% filter(species_code=="CAGO")
+ggplot(indx, aes(x=index_2018, y=index, color=species_code))+
+  geom_point()+
+  geom_abline(slope=1, intercept = 0)+
+  ylim(-20, 50)+
+  ylab("Index 2021")+
+  xlab("Index 2018")+
+  theme_classic()
 
-ggplot(indx.CAGO, aes(x=index_2018, y=index), colour=season)+
+indx.RCKI<-indx %>% filter(species_code=="RCKI")
+
+ggplot(indx.RCKI, aes(x=index_2018, y=index), colour=season)+
   geom_point()+
   #geom_abline(slope=1, intercept = 0)+
   #facet_wrap(~species_code)+
   ylab("Index 2021: GAM")+
   xlab("Index 2018")+
-  ggtitle("MBGO")+
+  ggtitle("MBGO - RCKI")+
+  geom_abline(slope=1, intercept = 0)+
   theme_classic()
 
 
