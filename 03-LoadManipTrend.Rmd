@@ -25,7 +25,7 @@ Also assign max year of the analysis. Generally, the data in NatureCounts are 2 
 
 ```{r setup}
 
-max.year <- 2021 #needs changes with each analysis
+max.year <- 2024 #needs changes with each analysis
 ID<- "dethier" #change this to your user ID. You will be prompted for a password. 
 
 ```
@@ -47,7 +47,7 @@ View(anal.param)
 Select your station. 
 ```{r chooseSite}
 
-t <- 19
+t <- 21 #change this to the row number of the site you want to analyze
 
 ```
 
@@ -70,7 +70,6 @@ First, assign 'u' your NatureCounts username and run the `prepare` scripts.
 
 ```{r data manip}
   
-ID<-"dethier" 
 source("i_prepare.R")
 source("ii_outputs.R")
 

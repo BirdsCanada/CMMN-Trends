@@ -13,7 +13,7 @@ source("00_setup.R")
 
 #Import data for the specified station (all species, sites, seasons) using the naturecounts R package. First, it will look to see if you have a copy saved in the data directory. 
 
-in.data <-try(read.csv(paste("./Data/2021/", site, "_Raw_Data.csv", sep="")))
+in.data <-try(read.csv(paste("./Data/", max.year, "/", site, "_Raw_Data.csv", sep="")))
 
 if(class(in.data) == 'try-error'){
 

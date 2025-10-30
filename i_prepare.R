@@ -77,15 +77,29 @@ if((station == "ACBO")) {
 }
 
 # note that this assumes that if stations that are no longer collecting are to be analyzed, that the last year is specified in the anal.param table:
-min.yr.filt <- ifelse(is.na(anal.param[t,"min.year"]),
-                      min(in.data$YearCollected), anal.param[t,"min.year"])
+#summer 
+min.yr.filt.f <- ifelse(is.na(anal.param[t,"min.year.summer"]),
+                      min(in.data$YearCollected), anal.param[t,"min.year.summer"])
+
+#fall
+min.yr.filt.s <- ifelse(is.na(anal.param[t,"min.year.fall"]),
+                      min(in.data$YearCollected), anal.param[t,"min.year.fall"])
 
 max.yr.filt <- ifelse(is.na(anal.param[t,"max.year"]),
                       max.year, anal.param[t,"max.year"])
 
-# Subset data to specified year range
-in.data <- in.data %>%
-  filter(YearCollected >= min.yr.filt & YearCollected <= max.yr.filt)
+# Now filter data by season/year:
+in.spring <- in.data %>%
+  filter(season == "Spring",
+         YearCollected >= min.yr.filt.s,
+         YearCollected <= max.yr.filt)
+
+in.fall <- in.data %>%
+  filter(season == "Fall",
+         YearCollected >= min.yr.filt.f,
+         YearCollected <= max.yr.filt)
+
+in.data<-rbind(in.spring, in.fall)
 
 #print("year range:"); print(range(in.data$YearCollected))
 
@@ -100,7 +114,7 @@ df.totYears <- in.data %>%
   group_by(SurveyAreaIdentifier, doy) %>%
   summarize(totYears = n()) %>%
   as.data.frame()%>% 
-  mutate(prop_year= totYears/((max.yr.filt-min.yr.filt)+1)) %>% 
+  mutate(prop_year= totYears/((max.yr.filt-min.yr.filt.f)+1)) %>% 
   mutate(season = if_else(doy < 180, "Spring", "Fall"))
 
 df.totYears$season_f<-factor(df.totYears$season, levels=c("Spring", "Fall"))
