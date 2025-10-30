@@ -375,7 +375,7 @@ for (j in 1:length(seas.list)) {
            # CR<-CR %>% group_by(doy) %>% summarise(meanCR=mean(mu), meanOB=mean(ObservationCount), meanSeUp = mean(SeUp), meanSeLo=mean(SeLo))
 
 
-  #if(!is.null(top.model)) {        
+  if(!is.null(top.model)) {        
              
   # Calculate abundance indices using the posterior sample of the model
 
