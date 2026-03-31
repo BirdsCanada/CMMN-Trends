@@ -54,6 +54,12 @@ for(k in 1:length(species.list)) {
     filter(SurveyAreaIdentifier %in% site.list) %>%
     droplevels()
   
+  
+  # some species-season have multiple codes within a season. Limit to one (random) selection. 
+  df.superfile <- df.superfile %>%  group_by(species_code, period) %>% slice_head(n=1) %>% ungroup() 
+  
+  
+  
     if(site != "LPBO") {
     df.migWindows <- df.superfile %>%
       filter(SpeciesCode == species.list[k]) %>%
@@ -73,9 +79,6 @@ for(k in 1:length(species.list)) {
       select(SurveyAreaIdentifier, SpeciesCode, season, analysis_code, start_date, end_date) %>%
       droplevels()
   } 
-  
-  # some species-season have multiple codes within a season. Limit to one (random) selection. 
-  df.superfile <- df.superfile %>%  group_by(species_code, period) %>% slice_head(n=1) %>% ungroup() 
   
   sp.data <- left_join(sp.data, df.migWindows, by = c("SurveyAreaIdentifier", "SpeciesCode", "season"), multiple="all")
 
@@ -103,16 +106,18 @@ if(nrow(sp.data)>0)  {
   
 for (j in 1:length(seas.list)) {
     
+    df.tmp<-NULL
     df.tmp <- droplevels(subset(sp.data, season == seas.list[j]))
     analysis_code <- unique(df.tmp$analysis_code)
+    
     
     if(is.na(analysis_code)){
       analysis_code<-"R"
     }
     
-    if(nrow(df.tmp) > 0) { 
     if(analysis_code=="M"){
   
+    tmp<-NULL
     tmp <- df.tmp %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, anal.param[t , "obs.var.M"], analysis_code) 
     # rename count variable, so consistent for following steps
     names(tmp)[10] <- c("ObservationCount") 
@@ -124,6 +129,7 @@ for (j in 1:length(seas.list)) {
     group_by(SurveyAreaIdentifier, season, SpeciesCode) %>%
     dplyr::summarize(nyears = dplyr::n()) %>%
     filter(nyears >= min.yrs.detect)%>%
+    filter(nyears >= 10) %>% #must be at least 10 years of data for the species/season
     as.data.frame()
   
   tmp <- left_join(df.nyears, tmp, by = c("SurveyAreaIdentifier", "season", "SpeciesCode"), multiple="all") %>%
@@ -141,10 +147,10 @@ for (j in 1:length(seas.list)) {
     summarize(count = sum(ObservationCount)) %>% 
     group_by(SurveyAreaIdentifier, season) %>% #now get mean across years
     summarize(meanCount = mean(count, na.rm = TRUE)) %>%
-    filter(meanCount >= 10)%>%
+    filter(meanCount >= 10)%>% 
     as.data.frame()
   
-  df.tmp <- left_join(df.abund, tmp, by = c("SurveyAreaIdentifier", "season"), multiple = "all") %>%
+  tmp <- left_join(df.abund, tmp, by = c("SurveyAreaIdentifier", "season"), multiple = "all") %>%
     select(-meanCount)%>%
     as.data.frame()
   
@@ -167,10 +173,12 @@ for (j in 1:length(seas.list)) {
     } #end if analysis code == M
   
 #select the other response variable if not M species or if M species does not meet minimum data requirement. 
-  if (analysis_code != "M" | nrow(tmp) == 0)
+  if (analysis_code != "M"){
 
-   df.tmp <- droplevels(subset(sp.data, season == seas.list[j]))
+  df.tmp<-NULL
+  df.tmp <- droplevels(subset(sp.data, season == seas.list[j]))
    
+  tmp<-NULL
    tmp <- df.tmp %>% dplyr::select(SurveyAreaIdentifier, YearCollected, MonthCollected, DayCollected, date, doy, season, SpeciesCode, species_id, anal.param[t , "obs.var.O"], analysis_code) 
     # rename count variable, so consistent for following steps
     names(tmp)[10] <- c("ObservationCount") 
@@ -183,6 +191,7 @@ for (j in 1:length(seas.list)) {
       group_by(SurveyAreaIdentifier, season, SpeciesCode) %>%
       dplyr::summarize(nyears = dplyr::n()) %>%
       filter(nyears >= min.yrs.detect)%>%
+      filter(nyears >= 10) %>% #must be at least 10 years of data for the species/season
       as.data.frame()
     
     tmp <- left_join(df.nyears, tmp, by = c("SurveyAreaIdentifier", "season", "SpeciesCode"), multiple="all") %>%
@@ -227,7 +236,8 @@ for (j in 1:length(seas.list)) {
    
   
 #continue if there is data
-  df.tmp<-tmp
+    df.tmp<-NULL
+    df.tmp<-tmp
     
     if(nrow(df.tmp) > 0) {
     
@@ -354,7 +364,7 @@ for (j in 1:length(seas.list)) {
               
   # Summary of the GAM smooth on year
   # I have checked that this is reflected in the latent posterior samples. Looks good. 
-           
+
            # nr<-nrow(df.tmp) #Year is stored first in the lc output
            # smooth<-top.modelS$summary.lincomb.derived
            # f<-exp(smooth[1:nr, "mean"])
@@ -399,12 +409,13 @@ for (j in 1:length(seas.list)) {
                 tmp1<-tmp1 %>% rowwise() %>% mutate(index = median(c_across(V2:V1001)), lower_ci=quantile(c_across(V2:V1001), 0.025), upper_ci=quantile(c_across(V2:V1001), 0.975), stdev=sd(c_across(V2:V1001))) 
                
                 
-              #Posterior GAM estimate smoothed (not year effect)     
+              #Posterior GAM estimate smoothed (not year effect) for plotting     
                 
+      
                   post.sample2<-NULL #clear previous
                   post.sample2<-inla.posterior.sample(nsamples, top.modelS)
                   tmp2 <- select(df.tmp, YearCollected)
-                  
+
                   #for each sample in the posterior we want to join the predicted to tmp so that the predictions line up with doy/year and we can get the mean count by year
                   for (h in 1:nsamples){
                     pred<-exp(post.sample2[[h]]$latent[1:nrow(df.tmp)])
@@ -412,7 +423,8 @@ for (j in 1:length(seas.list)) {
                   }
                   tmp2<-tmp2 %>% group_by(YearCollected) %>% summarise_all(mean, na.rm=TRUE)
                   tmp3<-tmp2 %>% rowwise() %>% mutate(trend_index = median(c_across(V2:V1001)))
-                 
+
+              
                   mn.yr1<-NULL
                   mn.yr1<-tmp1 %>% select(YearCollected, index, lower_ci, upper_ci, stdev)
                   mn.yr1$species_code <- species
@@ -431,11 +443,10 @@ for (j in 1:length(seas.list)) {
                   mn.yr1$error<-""
                   mn.yr1$stderr<-""
                   mn.yr1$trend_index<-tmp3$trend_index
-                
                      
   # Run LOESS function
                 
-                 mn.yr1$LOESS_index = loess_func(mn.yr1$index, mn.yr1$year)
+     mn.yr1$LOESS_index = loess_func(mn.yr1$index, mn.yr1$year)
                   
   # Order output before printing to table
              

@@ -40,14 +40,14 @@ View the file to identify the row you want to select
 ## Import site-specific analysis parameters 
 ##This will need checked and updated before each analysis
 anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv") 
-View(anal.param)
+#View(anal.param)
 
 ```
 
 Select your station. 
 ```{r chooseSite}
 
-t <- 21 #change this to the row number of the site you want to analyze
+t <- 5 #change this to the row number of the site you want to analyze
 
 ```
 

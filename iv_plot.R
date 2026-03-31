@@ -73,7 +73,7 @@ index<- left_join(index, sp.name, by="species_id")
 index <- index %>%
   filter(!is.na(species_code) & period == "all years") %>%
   dplyr::select(index, lower_ci, upper_ci,
-                species_code, year, season, area_code, species_id, english_name, french_name, order_taxon)
+                species_code, year, season, area_code, species_id, english_name, french_name, order_taxon, trend_index)
 
 plot.dat <- full_join(index, sp.trnd, by = c("area_code", "species_code", "english_name", "french_name"), multiple="all")
 plot.dat <- plot.dat[order(plot.dat$order_taxon),]
@@ -100,9 +100,13 @@ for(m in 1:(ceiling(length(sp.list)/6))) {
     facet_wrap(~ sp.trnd, ncol = 2, scales = "free", as.table = TRUE) +
     geom_pointrange(aes(ymin = lower_ci, ymax = upper_ci, group = season, shape = season, width =1), size = 0.4) +
     geom_smooth(aes(ymin = lower_ci, ymax = upper_ci, group = season, colour = season, fill = season, linetype = season), method = "loess",	size = 0.5, alpha = 0.1) + 
+  # geom_line(
+  #     aes(y = trend_index, group = season, colour = season, linetype = season),
+  #     size = 0.8
+  #   ) +
     xlab("Year") +
     ylab("Annual Index") +
-  #  scale_x_continuous(breaks = seq(from = min.yr.filt, to = max.yr.filt, by = 4)) +
+    #scale_x_continuous(breaks = seq(from = min.yr.filt, to = max.yr.filt, by = 2)) +
     scale_shape_manual(values = c(1,2)) +
     scale_y_continuous(trans='log10') +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +

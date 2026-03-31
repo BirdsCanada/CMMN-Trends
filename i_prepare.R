@@ -78,28 +78,34 @@ if((station == "ACBO")) {
 
 # note that this assumes that if stations that are no longer collecting are to be analyzed, that the last year is specified in the anal.param table:
 #summer 
-min.yr.filt.f <- ifelse(is.na(anal.param[t,"min.year.summer"]),
-                      min(in.data$YearCollected), anal.param[t,"min.year.summer"])
+min.yr.filt.s <- anal.param[t,"min.year.summer"]
 
 #fall
-min.yr.filt.s <- ifelse(is.na(anal.param[t,"min.year.fall"]),
-                      min(in.data$YearCollected), anal.param[t,"min.year.fall"])
+min.yr.filt.f <- anal.param[t,"min.year.fall"]
 
 max.yr.filt <- ifelse(is.na(anal.param[t,"max.year"]),
                       max.year, anal.param[t,"max.year"])
 
 # Now filter data by season/year:
-in.spring <- in.data %>%
-  filter(season == "Spring",
-         YearCollected >= min.yr.filt.s,
-         YearCollected <= max.yr.filt)
+dfs <- list()
 
-in.fall <- in.data %>%
-  filter(season == "Fall",
-         YearCollected >= min.yr.filt.f,
-         YearCollected <= max.yr.filt)
+if (!is.na(min.yr.filt.s)) {
+  in.spring <- in.data %>%
+    filter(season == "Spring",
+           YearCollected >= min.yr.filt.s,
+           YearCollected <= max.yr.filt)
+  dfs <- c(dfs, list(in.spring))
+}
 
-in.data<-rbind(in.spring, in.fall)
+if (!is.na(min.yr.filt.f)) {
+  in.fall <- in.data %>%
+    filter(season == "Fall",
+           YearCollected >= min.yr.filt.f,
+           YearCollected <= max.yr.filt)
+  dfs <- c(dfs, list(in.fall))
+}
+
+in.data <- do.call(rbind, dfs)
 
 #print("year range:"); print(range(in.data$YearCollected))
 
@@ -107,33 +113,67 @@ in.data<-rbind(in.spring, in.fall)
 min.yrs.detect <- trunc(length(unique(in.data$YearCollected))/2) 
 
 #total number of years each doy surveyed at each site (include 0-obs counts)
+n_years <- in.data %>%
+  distinct(YearCollected) %>%
+  nrow()   
+
 df.totYears<-NULL
 df.totYears <- in.data %>%
   select(SurveyAreaIdentifier, YearCollected, doy) %>%
   distinct() %>%
   group_by(SurveyAreaIdentifier, doy) %>%
-  summarize(totYears = n()) %>%
-  as.data.frame()%>% 
-  mutate(prop_year= totYears/((max.yr.filt-min.yr.filt.f)+1)) %>% 
-  mutate(season = if_else(doy < 180, "Spring", "Fall"))
+  summarize(totYears = n(), .groups = "drop") %>%
+  mutate(
+    prop_year = totYears / n_years,
+    season    = if_else(doy < 180, "Spring", "Fall")
+  )
 
-df.totYears$season_f<-factor(df.totYears$season, levels=c("Spring", "Fall"))
-df.totYears<- df.totYears[order(df.totYears$doy),]
+df.totYears$season_f <- factor(df.totYears$season, levels = c("Spring", "Fall"))
+df.totYears <- df.totYears[order(df.totYears$doy), ]
 
-#determine station regular operating window
-doy<-df.totYears %>% group_by(season_f) %>% filter(prop_year>0.68) %>% summarise(min=min(doy), max=max(doy))
+# determine station regular operating window
+doy_win <- df.totYears %>%
+  group_by(season_f) %>%
+  filter(prop_year > 0.68) %>%
+  summarize(min = min(doy), max = max(doy), .groups = "drop")
 
-min.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(min))
-max.spring<-as.numeric(doy %>% dplyr::filter(season_f=="Spring") %>% select(max))
-min.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(min))
-max.fall<-as.numeric(doy %>% dplyr::filter(season_f=="Fall") %>% select(max))
+min.spring <- doy_win %>%
+  filter(season_f == "Spring") %>%
+  pull(min)
+max.spring <- doy_win %>%
+  filter(season_f == "Spring") %>%
+  pull(max)
 
-#filter in.data by operating window
-fall<- try(in.data %>% filter(season=="Fall", doy>=min.fall, doy<=max.fall), silent=TRUE)
-spring<-try(in.data %>% filter(season=="Spring", doy>=min.spring, doy<=max.spring), silent = TRUE)
+min.fall <- doy_win %>%
+  filter(season_f == "Fall") %>%
+  pull(min)
+max.fall <- doy_win %>%
+  filter(season_f == "Fall") %>%
+  pull(max)
 
-#combine fall and spring data
-in.data<-rbind(spring, fall)
+# build list of filtered data frames only when the window exists
+dfs <- list()
+
+if (length(min.spring) == 1 && length(max.spring) == 1) {
+  dfs <- c(dfs, list(
+    in.data %>%
+      filter(season == "Spring",
+             doy >= min.spring,
+             doy <= max.spring)
+  ))
+}
+
+if (length(min.fall) == 1 && length(max.fall) == 1) {
+  dfs <- c(dfs, list(
+    in.data %>%
+      filter(season == "Fall",
+             doy >= min.fall,
+             doy <= max.fall)
+  ))
+}
+
+# combine fall and spring data (possibly only one, or even zero)
+in.data <- bind_rows(dfs)
 
 #create events data for zero filling
 event.data <- in.data %>%

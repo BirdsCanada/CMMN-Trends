@@ -103,6 +103,25 @@ sp.codes<-sp.codes %>% filter(authority=="CMMN" & rank==1) %>% select(species_id
 in.data<-left_join(in.data, sp.codes, by="species_id")
 in.data<-in.data %>% dplyr::rename(SpeciesCode=species_code)
 
+in.data <- in.data %>%
+  mutate(SpeciesCode = as.character(SpeciesCode),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "BHVI"|SpeciesCode == "CAVI"), "SOVI"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "YEWA"), "YWAR"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "ATSP"), "TRES"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "RSTO"|SpeciesCode == "URST"), "EATO"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "GBTH"|SpeciesCode == "GCBT"|SpeciesCode == "BITH"), "GCTH"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "NESP"|SpeciesCode == "STSP"), "NSTS"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "ALFL"|SpeciesCode == "WIFL"), "TRFL"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "GWCS"|SpeciesCode == "EWCS"), "WCSP"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "AGWT"), "GWTE"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "PSFL"), "WEFL"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "COSN"), "WISN"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "YSFL"|SpeciesCode == "FLIN"), "NOFL"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "EWPW"|SpeciesCode == "EWWP"), "WPWI"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "WPWA"|SpeciesCode == "UNPW"|SpeciesCode == "YPWA"), "PAWA"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "UYRW"|SpeciesCode == "MYWA"|SpeciesCode == "AUWA"), "YRWA"),
+         SpeciesCode = replace(SpeciesCode, (SpeciesCode == "SCJU"|SpeciesCode == "GHJU"|SpeciesCode == "ORJU"|SpeciesCode == "UDEJ"|SpeciesCode == "WWJU"|SpeciesCode == "YDEJ"|SpeciesCode == "PSJU"), "DEJU"))
+
 
 #total number of years each doy surveyed at each site (include 0-obs counts)
 df.totYears<-NULL
