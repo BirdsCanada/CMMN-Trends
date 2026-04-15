@@ -49,9 +49,24 @@ if((station == "MGBO")) {
 
 
 #If RPBO only want site RPBO (not PEBA or RBPO2)
-if((station == "RPBO")) {
+if((site == "RPBO")) {
   in.data <- in.data %>%
     filter(SurveyAreaIdentifier == "RPBO") %>%
+    droplevels()
+}
+
+
+#If site PEBA within station RPBO
+if((site == "PEBA")) {
+  in.data <- in.data %>%
+    filter(SurveyAreaIdentifier == "PEBA") %>%
+    droplevels()
+}
+
+#If site OOT-1 filter for correct sites (there are 4)
+if((site == "OOT-1")) {
+  in.data <- in.data %>%
+    filter(SurveyAreaIdentifier == "OOT-1") %>%
     droplevels()
 }
 

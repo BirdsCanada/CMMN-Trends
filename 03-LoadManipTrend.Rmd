@@ -47,7 +47,7 @@ anal.param <- read.csv("Data/CMMN_Analysis_ParameterValues.csv")
 Select your station. 
 ```{r chooseSite}
 
-t <- 5 #change this to the row number of the site you want to analyze
+t <- 17#change this to the row number of the site you want to analyze
 
 ```
 
